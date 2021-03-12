@@ -1,0 +1,11 @@
+#Build
+
+#Example stuff
+gatt_server/build/**
+gatt_server/tutorial/**
+
+#Editors
+.vscode
+
+#private files
+todo.md
