@@ -15,6 +15,7 @@
 *
 ****************************************************************************/
 
+#include "mytestcomp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -662,6 +663,20 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 
 void app_main(void)
 {
+
+    //testcomponent:
+    func(10,20);
+
+    /****************************/
+    /********* 1. Spiffs ********/
+    /****************************/
+
+
+
+    /****************************/
+    /********** 2. BLE **********/
+    /****************************/
+
     esp_err_t ret;
 
     // Initialize NVS.
