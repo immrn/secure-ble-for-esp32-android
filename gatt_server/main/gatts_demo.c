@@ -20,14 +20,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
 #include "esp_system.h"
 #include "esp_log.h"
+#include "esp_err.h"
 #include "nvs_flash.h"
-#include "esp_bt.h"
 
+//SPIFFS
+#include <sys/unistd.h>
+#include <sys/stat.h>
+#include "esp_spiffs.h"
+#include "mbedtls/md5.h"
+
+//BLE
+#include "esp_bt.h"
 #include "esp_gap_ble_api.h"
 #include "esp_gatts_api.h"
 #include "esp_bt_defs.h"
@@ -36,6 +46,7 @@
 
 #include "sdkconfig.h"
 
+static const char* SPIFFS_TAG = "ESP_SPIFFS";
 #define GATTS_TAG "ESP_GATTS"
 
 ///Declare the static function
@@ -661,6 +672,22 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
     } while (0);
 }
 
+static void read_head(char* file_path){
+    ESP_LOGI(SPIFFS_TAG, "Reading %s", file_path);
+    FILE* f = fopen(file_path, "r");
+    if (f == NULL){
+        ESP_LOGE(SPIFFS_TAG, "Failed to open %s", file_path);
+        return;
+    }
+
+    char buf[64];
+    memset(buf, 0, sizeof(buf));
+    fread(buf, 1, sizeof(buf), f);
+    fclose(f);
+
+    ESP_LOGI(SPIFFS_TAG, "Head of %s:\n%s", file_path, buf);
+}
+
 void app_main(void)
 {
 
@@ -671,13 +698,43 @@ void app_main(void)
     /********* 1. Spiffs ********/
     /****************************/
 
+    ESP_LOGI(SPIFFS_TAG, "Initializing SPIFFS");
 
+    esp_vfs_spiffs_conf_t conf = {
+      .base_path = "/spiffs",
+      .partition_label = NULL,
+      .max_files = 5,
+      .format_if_mount_failed = false
+    };
+
+    esp_err_t ret = esp_vfs_spiffs_register(&conf);
+
+    if (ret != ESP_OK) {
+        if (ret == ESP_FAIL) {
+            ESP_LOGE(SPIFFS_TAG, "Failed to mount or format filesystem");
+        } else if (ret == ESP_ERR_NOT_FOUND) {
+            ESP_LOGE(SPIFFS_TAG, "Failed to find SPIFFS partition");
+        } else {
+            ESP_LOGE(SPIFFS_TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
+        }
+        return;
+    }
+
+    size_t total = 0, used = 0;
+    ret = esp_spiffs_info(NULL, &total, &used);
+    if (ret != ESP_OK) {
+        ESP_LOGE(SPIFFS_TAG, "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
+    } else {
+        ESP_LOGI(SPIFFS_TAG, "Partition size: total: %d, used: %d", total, used);
+    }
+
+    read_head("/spiffs/crypto/bike_srv.crt");
 
     /****************************/
     /********** 2. BLE **********/
     /****************************/
 
-    esp_err_t ret;
+    //esp_err_t ret;
 
     // Initialize NVS.
     ret = nvs_flash_init();
@@ -736,6 +793,10 @@ void app_main(void)
     if (local_mtu_ret){
         ESP_LOGE(GATTS_TAG, "set local  MTU failed, error code = %x", local_mtu_ret);
     }
+
+    // Disable SPIFFS
+    esp_vfs_spiffs_unregister(NULL);
+    ESP_LOGI(SPIFFS_TAG, "SPIFFS unmounted");
 
     return;
 }

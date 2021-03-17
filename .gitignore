@@ -3,9 +3,16 @@
 #Example stuff
 gatt_server/build/**
 gatt_server/tutorial/**
+gatt_server/spiffs_image/**
 
 #Editors
 .vscode
+
+#Certificates and keys
+certs/**
+
+#ESP32 app spiffs image
+# TODO
 
 #private files
 todo.md
