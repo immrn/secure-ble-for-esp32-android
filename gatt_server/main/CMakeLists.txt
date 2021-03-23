@@ -1,5 +1,5 @@
 idf_component_register(SRCS "gatts_demo.c"
-                    INCLUDE_DIRS ".")
+                    INCLUDE_DIRS "." )
 
 # Create a SPIFFS image from the contents of the 'spiffs_image' directory
 # that fits the partition named 'storage'. FLASH_IN_PROJECT indicates that

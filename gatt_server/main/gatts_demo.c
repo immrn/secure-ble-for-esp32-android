@@ -34,7 +34,6 @@
 #include <sys/unistd.h>
 #include <sys/stat.h>
 #include "esp_spiffs.h"
-#include "mbedtls/md5.h"
 
 //BLE
 #include "esp_bt.h"
@@ -44,10 +43,24 @@
 #include "esp_bt_main.h"
 #include "esp_gatt_common_api.h"
 
+//mbedtls
+#include <inttypes.h>
+
+#include <errno.h>
+#include <signal.h>
+#include <unistd.h>
+
+#include "mbedtls/pk.h"
+#include "mbedtls/sha256.h"
+#include "mbedtls/x509.h"
+
+#include "ssl_ctx.h"
+
 #include "sdkconfig.h"
 
-static const char* SPIFFS_TAG = "ESP_SPIFFS";
+#define SPIFFS_TAG "ESP_SPIFFS"
 #define GATTS_TAG "ESP_GATTS"
+#define HEAP_TAG "ESP_HEAP"
 
 ///Declare the static function
 static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
@@ -63,7 +76,7 @@ static void gatts_profile_b_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
 #define GATTS_DESCR_UUID_TEST_B     0x2222
 #define GATTS_NUM_HANDLE_TEST_B     4
 
-#define TEST_DEVICE_NAME            "ESP_GATTS"
+#define GATTS_DEVICE_NAME           "ESP32_GATT_SERVER"
 #define TEST_MANUFACTURER_DATA_LEN  17
 
 #define GATTS_DEMO_CHAR_VAL_LEN_MAX 0x40
@@ -105,8 +118,8 @@ static uint8_t adv_service_uuid128[32] = {
 };
 
 // The length of adv data must be less than 31 bytes
-//static uint8_t test_manufacturer[TEST_MANUFACTURER_DATA_LEN] =  {0x12, 0x23, 0x45, 0x56};
-//adv data
+// static uint8_t test_manufacturer[TEST_MANUFACTURER_DATA_LEN] =  {0x12, 0x23, 0x45, 0x56};
+// adv data
 static esp_ble_adv_data_t adv_data = {
     .set_scan_rsp = false,
     .include_name = true,
@@ -156,11 +169,17 @@ static esp_ble_adv_params_t adv_params = {
 #define PROFILE_A_APP_ID 0
 #define PROFILE_B_APP_ID 1
 
-struct gatts_profile_inst {
+// values for connection status
+#define BLE_CONNECTED 1
+#define BLE_DISCONNECTED 0
+
+
+typedef struct __gatts_profile_inst__ {
     esp_gatts_cb_t gatts_cb;
     uint16_t gatts_if;
     uint16_t app_id;
-    uint16_t conn_id;
+    uint16_t conn_id;               // 0 at initialization, first created conn_id is also 0 --> need new variable for connection status
+    uint8_t conn_status;            // new variable for connection status
     uint16_t service_handle;
     esp_gatt_srvc_id_t service_id;
     uint16_t char_handle;
@@ -169,17 +188,19 @@ struct gatts_profile_inst {
     esp_gatt_char_prop_t property;
     uint16_t descr_handle;
     esp_bt_uuid_t descr_uuid;
-};
+}gatts_profile_inst;
 
 /* One gatt-based profile one app_id and one gatts_if, this array will store the gatts_if returned by ESP_GATTS_REG_EVT */
-static struct gatts_profile_inst gl_profile_tab[PROFILE_NUM] = {
+static gatts_profile_inst gl_profile_tab[PROFILE_NUM] = {
     [PROFILE_A_APP_ID] = {
         .gatts_cb = gatts_profile_a_event_handler,
         .gatts_if = ESP_GATT_IF_NONE,       /* Not get the gatt_if, so initial is ESP_GATT_IF_NONE */
+        .conn_status = BLE_DISCONNECTED
     },
     [PROFILE_B_APP_ID] = {
         .gatts_cb = gatts_profile_b_event_handler,                   /* This demo does not implement, similar as profile A */
         .gatts_if = ESP_GATT_IF_NONE,       /* Not get the gatt_if, so initial is ESP_GATT_IF_NONE */
+        .conn_status = BLE_DISCONNECTED
     },
 };
 
@@ -194,8 +215,7 @@ static prepare_type_env_t b_prepare_write_env;
 void example_write_event_env(esp_gatt_if_t gatts_if, prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param);
 void example_exec_write_event_env(prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param);
 
-static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
-{
+static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param){
     switch (event) {
 #ifdef CONFIG_SET_RAW_ADV_DATA
     case ESP_GAP_BLE_ADV_DATA_RAW_SET_COMPLETE_EVT:
@@ -317,7 +337,7 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
         gl_profile_tab[PROFILE_A_APP_ID].service_id.id.uuid.len = ESP_UUID_LEN_16;
         gl_profile_tab[PROFILE_A_APP_ID].service_id.id.uuid.uuid.uuid16 = GATTS_SERVICE_UUID_TEST_A;
 
-        esp_err_t set_dev_name_ret = esp_ble_gap_set_device_name(TEST_DEVICE_NAME);
+        esp_err_t set_dev_name_ret = esp_ble_gap_set_device_name(GATTS_DEVICE_NAME);
         if (set_dev_name_ret){
             ESP_LOGE(GATTS_TAG, "set device name failed, error code = %x", set_dev_name_ret);
         }
@@ -482,11 +502,13 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
         gl_profile_tab[PROFILE_A_APP_ID].conn_id = param->connect.conn_id;
         //start sent the update connection parameters to the peer device.
         esp_ble_gap_update_conn_params(&conn_params);
+        gl_profile_tab[PROFILE_A_APP_ID].conn_status = BLE_CONNECTED;
         break;
     }
     case ESP_GATTS_DISCONNECT_EVT:
         ESP_LOGI(GATTS_TAG, "ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
         esp_ble_gap_start_advertising(&adv_params);
+        gl_profile_tab[PROFILE_A_APP_ID].conn_status = BLE_DISCONNECTED;
         break;
     case ESP_GATTS_CONF_EVT:
         ESP_LOGI(GATTS_TAG, "ESP_GATTS_CONF_EVT, status %d attr_handle %d", param->conf.status, param->conf.handle);
@@ -525,8 +547,7 @@ static void gatts_profile_b_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
         rsp.attr_value.value[1] = 0xed;
         rsp.attr_value.value[2] = 0xbe;
         rsp.attr_value.value[3] = 0xef;
-        esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id,
-                                    ESP_GATT_OK, &rsp);
+        esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id, ESP_GATT_OK, &rsp);
         break;
     }
     case ESP_GATTS_WRITE_EVT: {
@@ -625,6 +646,7 @@ static void gatts_profile_b_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
                  param->connect.remote_bda[0], param->connect.remote_bda[1], param->connect.remote_bda[2],
                  param->connect.remote_bda[3], param->connect.remote_bda[4], param->connect.remote_bda[5]);
         gl_profile_tab[PROFILE_B_APP_ID].conn_id = param->connect.conn_id;
+        gl_profile_tab[PROFILE_B_APP_ID].conn_status = BLE_CONNECTED;
         break;
     case ESP_GATTS_CONF_EVT:
         ESP_LOGI(GATTS_TAG, "ESP_GATTS_CONF_EVT status %d attr_handle %d", param->conf.status, param->conf.handle);
@@ -633,6 +655,7 @@ static void gatts_profile_b_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
         }
     break;
     case ESP_GATTS_DISCONNECT_EVT:
+        gl_profile_tab[PROFILE_B_APP_ID].conn_status = BLE_DISCONNECTED;
     case ESP_GATTS_OPEN_EVT:
     case ESP_GATTS_CANCEL_OPEN_EVT:
     case ESP_GATTS_CLOSE_EVT:
@@ -672,30 +695,187 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
     } while (0);
 }
 
-static void read_head(char* file_path){
-    ESP_LOGI(SPIFFS_TAG, "Reading %s", file_path);
-    FILE* f = fopen(file_path, "r");
-    if (f == NULL){
-        ESP_LOGE(SPIFFS_TAG, "Failed to open %s", file_path);
-        return;
+// mbedtls
+int send_data(void* ctx, const unsigned char* data, size_t len)
+{
+	printf("mbed_tls wants to write %zu bytes.\n", len);
+
+	// // Retrieve the IO context.
+	const gatts_profile_inst* io = ctx;
+
+    esp_err_t ret = esp_ble_gatts_set_attr_value(io->char_handle, (uint16_t) len, data);
+    if (ret){
+        ESP_LOGE(GATTS_TAG, "failed to set attr value: %s", esp_err_to_name(ret));
     }
 
-    char buf[64];
-    memset(buf, 0, sizeof(buf));
-    fread(buf, 1, sizeof(buf), f);
-    fclose(f);
+    ret = esp_ble_gatts_send_indicate(io->gatts_if, io->conn_id, io->char_handle, (uint16_t) len, (uint8_t*) data, false);
+    if (ret){
+        ESP_LOGE(GATTS_TAG, "failed to notify/indicate attr value: %s", esp_err_to_name(ret));
+        return -1;
+    }
 
-    ESP_LOGI(SPIFFS_TAG, "Head of %s:\n%s", file_path, buf);
+    return len;
+}
+
+int recv_data(void* ctx, unsigned char* data, size_t len, uint32_t timeout_msec)
+{
+	printf("mbed_tls wants to read %zu bytes.\n", len);
+
+	// Retrieve the IO context.
+	const gatts_profile_inst* io = ctx;
+
+    esp_err_t ret = esp_ble_gatts_get_attr_value(io->char_handle, (uint16_t*) &len, (const uint8_t**) &data);
+    if(ret){
+        ESP_LOGE(GATTS_TAG, "failed to get attr value: %s", esp_err_to_name(ret));
+        return -1;
+    }
+
+	return len;
+}
+
+int read_subscription_part(ssl_ctx* ctx, unsigned char* buf, size_t max_len, size_t* out_len)
+{
+	// Length
+	uint16_t len;
+	int err = ssl_ctx_recv(ctx, (unsigned char*)&len, sizeof(len));
+
+	if (err || (len > max_len))
+	{
+		printf("err %i or len > max_len\n", err);
+		return 0;
+	}
+
+	// Data
+	err = ssl_ctx_recv(ctx, buf, len);
+
+	if (err)
+	{
+		printf("err %i\n", err);
+		return 0;
+	}
+
+	*out_len = len;
+	return 1;
+}
+
+int verify_subscription(ssl_ctx* ctx)
+{
+	// TODO: Right now, this has the following structure:
+	// - 2 bytes: Payload length
+	// - n bytes: Payload
+	// - 2 bytes: signature length
+	// - n bytes: signature
+	// - 2 bytes: Signer certificate length (including null terminator)
+	// - n bytes: Signer certificate (must be null-terminated, signed by CA, CN must be equal to "fb_steigtum_backend_subscript")
+
+	// Read the payload.
+	unsigned char payload_buf[1024];
+	size_t payload_len;
+
+	if (!read_subscription_part(ctx, payload_buf, sizeof(payload_buf), &payload_len))
+	{
+		printf("Failed to read payload.\n");
+		return 0;
+	}
+
+	printf("Payload length: %zu bytes\n", payload_len);
+
+	// Hash the payload.
+	unsigned char hash[32];
+	int err = mbedtls_sha256_ret(payload_buf, payload_len, hash, 0);
+
+	if (err)
+	{
+		printf("Failed to hash payload: %s\n", ssl_ctx_error_msg(err));
+		return 0;
+	}
+
+	// Read the signature.
+	unsigned char signature_buf[512];
+	size_t signature_len;
+
+	if (!read_subscription_part(ctx, signature_buf, sizeof(signature_buf), &signature_len))
+	{
+		printf("Failed to read signature.\n");
+		return 0;
+	}
+
+	printf("Signature length: %zu bytes\n", signature_len);
+
+	// Read the signer certificate.
+	unsigned char signer_crt_buf[4096];
+	size_t signer_crt_len;
+
+	if (!read_subscription_part(ctx, signer_crt_buf, sizeof(signer_crt_buf), &signer_crt_len))
+	{
+		printf("Failed to read signer certificate.\n");
+		return 0;
+	}
+
+	printf("Signer certificate length: %zu bytes\n", signer_crt_len);
+
+	// Parse the signer certificate.
+	mbedtls_x509_crt signer_crt;
+	mbedtls_x509_crt_init(&signer_crt);
+
+	err = mbedtls_x509_crt_parse(&signer_crt, signer_crt_buf, signer_crt_len);
+
+	if (err)
+	{
+		printf("Failed to parse signer certificate: %s\n", ssl_ctx_error_msg(err));
+		mbedtls_x509_crt_free(&signer_crt);
+
+		return 0;
+	}
+
+	// Verify the signer certificate.
+	uint32_t flags;
+	err = mbedtls_x509_crt_verify(&signer_crt, &ctx->ca_crt, NULL, "fb_steigtum_backend_subscript", &flags, NULL, NULL);
+
+	if (err)
+	{
+		printf("Failed to validate signer certificate: %s\n", ssl_ctx_error_msg(err));
+		mbedtls_x509_crt_free(&signer_crt);
+
+		return 0;
+	}
+
+	// Verify the signature using the certificate's public key context and free the certificate.
+	err = mbedtls_pk_verify(&signer_crt.pk, MBEDTLS_MD_SHA256, hash, sizeof(hash), signature_buf, signature_len);
+	mbedtls_x509_crt_free(&signer_crt);
+
+	if (err)
+	{
+		printf("Failed to verify signature: %s\n", ssl_ctx_error_msg(err));
+		return 0;
+	}
+
+	// TODO: Return the valid subscription!
+
+	return 1;
+}
+
+// Heap
+static void failed_alloc_cb(size_t size, uint32_t caps, const char* func_name){
+    ESP_LOGE(HEAP_TAG, "Failed to allocate %zu bytes in %s", size, func_name);
+    return;
 }
 
 void app_main(void)
 {
+    esp_err_t ret = heap_caps_register_failed_alloc_callback(failed_alloc_cb);
+    if(ret){
+        ESP_LOGE(HEAP_TAG, "heap_caps_register_failed_alloc_callback() failed (%s)", esp_err_to_name(ret));
+    }
+    // Check heap
+    ESP_LOGI(HEAP_TAG, "Free bytes in (data memory) heap:\t\t%zu", heap_caps_get_free_size(MALLOC_CAP_8BIT));
+    ESP_LOGI(HEAP_TAG, "Largest free block in (data memory) heap:\t%zu", heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
 
-    //testcomponent:
+    // testcomponent:
     func(10,20);
 
     /****************************/
-    /********* 1. Spiffs ********/
+    /********* 1. SPIFFS ********/
     /****************************/
 
     ESP_LOGI(SPIFFS_TAG, "Initializing SPIFFS");
@@ -707,7 +887,7 @@ void app_main(void)
       .format_if_mount_failed = false
     };
 
-    esp_err_t ret = esp_vfs_spiffs_register(&conf);
+    ret = esp_vfs_spiffs_register(&conf);
 
     if (ret != ESP_OK) {
         if (ret == ESP_FAIL) {
@@ -728,13 +908,9 @@ void app_main(void)
         ESP_LOGI(SPIFFS_TAG, "Partition size: total: %d, used: %d", total, used);
     }
 
-    read_head("/spiffs/crypto/bike_srv.crt");
-
     /****************************/
     /********** 2. BLE **********/
     /****************************/
-
-    //esp_err_t ret;
 
     // Initialize NVS.
     ret = nvs_flash_init();
@@ -794,9 +970,84 @@ void app_main(void)
         ESP_LOGE(GATTS_TAG, "set local  MTU failed, error code = %x", local_mtu_ret);
     }
 
+    /****************************/
+    /******** 3. mbedtls ********/
+    /****************************/
+
+    // Test for sending data to the peer device
+
+    // while(gl_profile_tab[PROFILE_A_APP_ID].conn_status == BLE_DISCONNECTED){
+    //     printf("disconnected, conn_id A = %d\n", gl_profile_tab[PROFILE_A_APP_ID].conn_id);
+    //     sleep(2);
+    // }
+    // sleep(4);
+    // while(gl_profile_tab[PROFILE_A_APP_ID].conn_status == BLE_CONNECTED){
+    //     printf("connceted, conn_id A = %d\n", gl_profile_tab[PROFILE_A_APP_ID].conn_id);
+
+    //     uint8_t my_data[4] = { 0xAA, 0xBB, 0xAA, 0xBB };
+    //     uint8_t* my_data_p = malloc(sizeof(my_data));
+    //     my_data_p = my_data;
+
+    //     ret = esp_ble_gatts_set_attr_value(gl_profile_tab[PROFILE_A_APP_ID].char_handle, (uint16_t) sizeof(&my_data_p), my_data_p);
+    //     ESP_LOGI(GATTS_TAG, "return = %d", ret);
+    //     if (ret){
+    //         ESP_LOGE(GATTS_TAG, "failed to set attr value, %s", esp_err_to_name(ret));
+    //     }
+
+    //     esp_ble_gatts_send_indicate(gl_profile_tab[PROFILE_A_APP_ID].gatts_if, gl_profile_tab[PROFILE_A_APP_ID].conn_id, gl_profile_tab[PROFILE_A_APP_ID].char_handle, sizeof(&my_data_p), my_data_p, false);
+
+    //     uint16_t len;
+    //     const uint8_t* val;
+
+    //     ret = esp_ble_gatts_get_attr_value(gl_profile_tab[PROFILE_A_APP_ID].char_handle, &len, &val);
+    //     ESP_LOGI(GATTS_TAG, "return = %d", ret);
+    //     if(ret){
+    //         ESP_LOGE(GATTS_TAG, "failed to get attr value, %s", esp_err_to_name(ret));
+    //     }else{
+    //         for(int i = 0; i < len; i++){
+    //             ESP_LOGI(GATTS_TAG, "prf_char[%x] =%x", i, val[i]);
+    //         }
+    //     }
+
+    //     sleep(6);
+    // }
+
+    // Check heap
+    sleep(1);
+    ESP_LOGI(HEAP_TAG, "Free bytes in (data memory) heap:\t\t%zu", heap_caps_get_free_size(MALLOC_CAP_8BIT));
+    ESP_LOGI(HEAP_TAG, "Largest free block in (data memory) heap:\t%zu", heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
+
+	// Create an SSL context.
+	// Note that it references the IO context on the stack via pointer!
+	// That pointer must be alive for all send / recv calls.
+	ssl_ctx ctx;
+	ssl_ctx_create(&ctx, "/spiffs/crypto/bike_srv.key", "/spiffs/crypto/bike_srv.crt", "/spiffs/crypto/ca.crt", "fb_steigtum_app_clt", send_data, recv_data, &gl_profile_tab[PROFILE_A_APP_ID]);
+
+    // Check heap
+    ESP_LOGI(HEAP_TAG, "Free bytes in (data memory) heap:\t\t%zu", heap_caps_get_free_size(MALLOC_CAP_8BIT));
+    ESP_LOGI(HEAP_TAG, "Largest free block in (data memory) heap:\t%zu", heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
+
+    // Await Connection.
+    while(gl_profile_tab[PROFILE_A_APP_ID].conn_status == BLE_DISCONNECTED){
+        sleep(1);
+    }
+
+    // Try to perform a successful SSL handshake.
+    int err = ssl_ctx_perform_handshake(&ctx);
+
+    if (err != 0){
+        printf("Failed to perform SSL handshake: %s\n", ssl_ctx_error_msg(err));
+        // close(new_sock);
+    }
+
+    // ssl_ctx_destroy(&ctx);
+    // // Check heap
+    // ESP_LOGI(HEAP_TAG, "Free bytes in (data memory) heap:\t\t%zu", heap_caps_get_free_size(MALLOC_CAP_8BIT));
+    // ESP_LOGI(HEAP_TAG, "Largest free block in (data memory) heap:\t%zu", heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
+
     // Disable SPIFFS
-    esp_vfs_spiffs_unregister(NULL);
-    ESP_LOGI(SPIFFS_TAG, "SPIFFS unmounted");
+    // esp_vfs_spiffs_unregister(NULL);
+    // ESP_LOGI(SPIFFS_TAG, "SPIFFS unmounted");
 
     return;
 }
