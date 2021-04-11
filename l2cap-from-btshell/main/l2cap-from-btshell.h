@@ -7,6 +7,10 @@
 #include "esp_nimble_hci.h"
 #include "host/ble_hs.h"
 
+struct ble_hs_cfg;
+
+void ble_store_config_init(void);
+
 /*** gap ***/
 
 int adv_start(uint8_t own_addr_type, const ble_addr_t *direct_addr, int32_t duration_ms, const struct ble_gap_adv_params *params, bool restart);

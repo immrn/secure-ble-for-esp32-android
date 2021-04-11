@@ -11,7 +11,7 @@
 #include "host/ble_l2cap.h"
 #include "host/ble_gap.h"
 #include "services/gap/ble_svc_gap.h"
-#include "host/ble_store.h"
+// #include "host/ble_store.h"
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
 
@@ -70,6 +70,45 @@ static struct os_mempool sdu_coc_mbuf_mempool;
 /*** gap ***/
 
 int adv_start(uint8_t own_addr_type, const ble_addr_t *direct_addr, int32_t duration_ms, const struct ble_gap_adv_params *params, bool restart){
+    struct ble_hs_adv_fields fields;
+    const char *name;
+    int rc;
+
+    /**
+     *  Set the advertisement data included in our advertisements:
+     *     o Flags (indicates advertisement type and other general info).
+     *     o Advertising tx power.
+     *     o Device name.
+     *     o 16-bit service UUIDs (alert notifications).
+     */
+
+    memset(&fields, 0, sizeof(fields));
+
+    // Advertise two flags: Discoverability in forthcoming advertisement (general) BLE-only (BR/EDR unsupported)
+    fields.flags = BLE_HS_ADV_F_DISC_GEN |
+                   BLE_HS_ADV_F_BREDR_UNSUP;
+
+    fields.tx_pwr_lvl_is_present = 1;
+    fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
+
+    name = ble_svc_gap_device_name();
+    fields.name = (uint8_t *)name;
+    fields.name_len = strlen(name);
+    fields.name_is_complete = 1;
+
+    // fields.uuids16 = (ble_uuid16_t[]) {
+    //     BLE_UUID16_INIT(GATT_SVR_SVC_ALERT_UUID)
+    // };
+    // fields.num_uuids16 = 1;
+    // fields.uuids16_is_complete = 1;
+
+    rc = ble_gap_adv_set_fields(&fields);
+    assert(rc == 0);
+
+    /* Begin advertising. */
+    adv_params.params.conn_mode = BLE_GAP_CONN_MODE_UND;
+    adv_params.params.disc_mode = BLE_GAP_DISC_MODE_GEN;
+
     if(restart){
         adv_params.restart = restart;
         adv_params.own_addr_type = own_addr_type;
@@ -84,7 +123,7 @@ int adv_start(uint8_t own_addr_type, const ble_addr_t *direct_addr, int32_t dura
         }
     }
 
-    int rc = ble_gap_adv_start(own_addr_type, direct_addr, duration_ms, params, on_gap_event, NULL);
+    rc = ble_gap_adv_start(own_addr_type, direct_addr, duration_ms, params, on_gap_event, NULL);
     return rc;
 }
 
@@ -869,8 +908,6 @@ void host_task_func(void *param)
     nimble_port_freertos_deinit();
 }
 
-static struct ble_gap_adv_params params;
-
 void app_main(void){
     int ret;
 
@@ -898,20 +935,22 @@ void app_main(void){
     ble_hs_cfg.reset_cb = on_host_contr_reset;
     ble_hs_cfg.sync_cb = on_host_contr_sync;
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
+    ble_hs_cfg.sm_sc = 0;
+    ble_store_config_init();
     nimble_port_freertos_init(host_task_func);
 
     ble_l2cap_create_server(APP_CID, L2CAP_COC_MTU, on_l2cap_event, NULL);
 
     // Advertising
+    ble_svc_gap_init();
     ret = ble_svc_gap_device_name_set("nimble-device");
     assert(ret == 0);
-    // ble_store_config_init();
-    params.conn_mode = BLE_GAP_CONN_MODE_UND;
-    params.disc_mode = BLE_GAP_DISC_MODE_GEN;
+    // params.conn_mode = BLE_GAP_CONN_MODE_UND;
+    // params.disc_mode = BLE_GAP_DISC_MODE_GEN;
     // params.itvl_min = 0;
     // params.itvl_max = 0;
     // params.channel_map = 0;
     //ble_gap_adv_set_data
-    ret = adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &params, false);
-    assert(ret == 0);
+    // ret = adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &params, false);
+    // assert(ret == 0);
 }
