@@ -53,8 +53,8 @@
 		mbedtls_gen_key type=rsa rsa_keysize=4096 filename=bike_srv.key format=pem
 		mbedtls_cert_write issuer_crt=ca.crt subject_key=bike_srv.key subject_name=CN=fb_steigtum_bike_srv,O=tubaf,C=de output_file=bike_srv.crt
 		```
-	- in dir `gatt_server` make the dir `spiffs_image/crypto`
-	- copy `bike_srv.key`, `bike_srv.crt` and `ca.crt` from dir `certs` into the dir <!-- TODO --> `gatt_server/spiffs_image/crypto`
+	- in dir `l2cap_server` make the dir `spiffs_image/crypto`
+	- copy `bike_srv.key`, `bike_srv.crt` and `ca.crt` from dir `certs` into the dir <!-- TODO --> `l2cap_server/spiffs_image/crypto`
 	</p>
 	</details>
 
@@ -64,7 +64,7 @@
 
 ### ESP32 App:
 - depends on how you made your choice in the [Get-Started-Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html)
-- Hint: if esp-idf was installed manually, in <!-- TODO --> `gatt_server` run
+- Hint: if esp-idf was installed manually, in <!-- TODO --> `l2cap_server` run
 	```
 	$ idf.py -p PORT size flash monitor
 	```

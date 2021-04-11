@@ -12,7 +12,8 @@
 #    Arg 1: path to the esp directory (esp dir contains the esp-idf dir)
 #       - e.g.: if your esp dir is located at /home/USER/esp, then run ./gen_cert_chain /home/USER/esp
 
-esp_app_dir="gatt_server" # TODO: maybe adjust dir name
+esp_app_dir="ble_spp_server" # TODO: adjust dir name
+client_dir="ble_spp_client" # TODO: adjust dir name
 certs_dir="certs"
 
 # Check arg 1
@@ -62,7 +63,7 @@ $mbedtls_cert_write issuer_crt=ca.crt subject_key=bike_srv.key subject_name=CN=f
 
 cd ..
 
-
+#Server
 # If directory ${esp_app_dir}/spiffs_image/crypto doesn't exist, create it
 if [ ! -d "${esp_app_dir}/spiffs_image/crypto" ]
 then
@@ -71,9 +72,23 @@ then
 fi
 
 # Copy bike key,bike cert and CA cert into the esp image dir:
-echo "copy bike key, bike crt and CA cert into ${esp_app_dir}/spiffs_image/crypto"
+echo "copying following files into ${esp_app_dir}/spiffs_image/crypto:"
+echo -e "${certs_dir}/bike_srv.key\n${certs_dir}/bike_srv.crt\n${certs_dir}/ca.crt\n"
 cp ${certs_dir}/bike_srv.key ${certs_dir}/bike_srv.crt ${certs_dir}/ca.crt ${esp_app_dir}/spiffs_image/crypto
 
-#   3. copy TODO certs and keys to android app
+#Client
+# If directory ${client_dir}/spiffs_image/crypto doesn't exist, create it
+if [ ! -d "${client_dir}/spiffs_image/crypto" ]
+then
+    echo "making directory ${client_dir}/spiffs_image/crypto"
+    mkdir ${client_dir}/spiffs_image && mkdir ${client_dir}/spiffs_image/crypto
+fi
+
+# Copy TODO certs and keys to android app
+echo "copying following files into ${client_dir}/spiffs_image/crypto:"
+echo -e "${certs_dir}/app_clt.key\n${certs_dir}/app_clt.crt\n${certs_dir}/ca.crt\n${certs_dir}/backend_subscript.crt\n${certs_dir}/backend_subscript.key"
+cp ${certs_dir}/app_clt.key ${certs_dir}/app_clt.crt ${certs_dir}/ca.crt ${certs_dir}/backend_subscript.crt ${certs_dir}/backend_subscript.key ${client_dir}/spiffs_image/crypto
+
+
 
 exit

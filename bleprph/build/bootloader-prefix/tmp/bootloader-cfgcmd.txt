@@ -1,0 +1,1 @@
+cmd='/usr/bin/cmake;-DSDKCONFIG=/home/mrm/repos/secure-ble-for-esp32-android/bleprph/sdkconfig;-DIDF_PATH=/home/mrm/esp/esp-idf;-DIDF_TARGET=esp32;-DPYTHON_DEPS_CHECKED=1;-DPYTHON=/home/mrm/.espressif/python_env/idf4.4_py3.6_env/bin/python;-DEXTRA_COMPONENT_DIRS=/home/mrm/esp/esp-idf/components/bootloader;-DLEGACY_INCLUDE_COMMON_HEADERS=;-GNinja;<SOURCE_DIR><SOURCE_SUBDIR>'

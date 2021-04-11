@@ -2,7 +2,7 @@
 #define ___SSL_CTX_H___
 
 // If this is defined, mbedtls prints debug messages to stdout.
-#define SSL_CTX_DEBUG
+// #define SSL_CTX_DEBUG
 
 #include "mbedtls/config.h"
 #include "mbedtls/ctr_drbg.h"
