@@ -5,17 +5,8 @@ gatt_server/build/**
 gatt_server/tutorial/**
 gatt_server/spiffs_image/**
 
-l2cap_server/build/**
-l2cap_server/spiffs_image/**
-
-l2cap_server_socket/build/**
-l2cap_server_socket/spiffs_image/**
-
-ble_spp_server/build/**
-ble_spp_server/spiffs_image/**
-
-ble_spp_client/build/**
-ble_spp_client/spiffs_image/**
+l2cap-from-btshell/build/**
+bleprph/build/**
 
 btshell/**
 btshell-test/**
