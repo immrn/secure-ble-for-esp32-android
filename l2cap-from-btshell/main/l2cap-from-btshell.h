@@ -7,9 +7,6 @@
 #include "esp_nimble_hci.h"
 #include "host/ble_hs.h"
 
-struct ble_hs_cfg;
-
-void ble_store_config_init(void);
 
 /*** gap ***/
 

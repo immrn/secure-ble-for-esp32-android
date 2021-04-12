@@ -1,6 +1,9 @@
 #Build
 
 #Example stuff
+l2cap_server/build/**
+l2cap_client/build/**
+
 gatt_server/build/**
 gatt_server/tutorial/**
 gatt_server/spiffs_image/**
@@ -13,7 +16,7 @@ btshell-test/**
 ble_spp_server/**
 ble_spp_client/**
 l2cap_socket_server/**
-l2cap_server/**
+
 
 #Editors
 .vscode

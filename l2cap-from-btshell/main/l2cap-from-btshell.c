@@ -106,9 +106,6 @@ int adv_start(uint8_t own_addr_type, const ble_addr_t *direct_addr, int32_t dura
     assert(rc == 0);
 
     /* Begin advertising. */
-    adv_params.params.conn_mode = BLE_GAP_CONN_MODE_UND;
-    adv_params.params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-
     if(restart){
         adv_params.restart = restart;
         adv_params.own_addr_type = own_addr_type;
@@ -340,7 +337,7 @@ static int l2cap_conn_find_idx(uint16_t handle){
     return -1;
 }
 
-static struct l2cap_conn *l2cap_conn_find(uint16_t handle){
+static struct l2cap_conn* l2cap_conn_find(uint16_t handle){
     int idx = l2cap_conn_find_idx(handle);
     if(idx == -1){
         return NULL;
@@ -349,8 +346,8 @@ static struct l2cap_conn *l2cap_conn_find(uint16_t handle){
     }
 }
 
-static struct l2cap_conn *l2cap_conn_add(struct ble_gap_conn_desc *desc){
-    struct l2cap_conn *conn;
+static struct l2cap_conn* l2cap_conn_add(struct ble_gap_conn_desc *desc){
+    struct l2cap_conn* conn;
 
     assert(l2cap_conns_num < MYNEWT_VAL(BLE_MAX_CONNECTIONS));
 
@@ -655,18 +652,20 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
                 event->connect.status == 0 ? "established" : "failed",
                 event->connect.status);
 
+            // add the L2CAP connection
             if(event->connect.status == 0){
                 rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
                 assert(rc == 0);
                 print_conn_desc(&desc);
                 l2cap_conn_add(&desc);
             }
-            return 0;
+            return 0; //TODO maybe stop advertising
 
         case BLE_GAP_EVENT_DISCONNECT:
             printf("disconnect; reason=%d ", event->disconnect.reason);
             print_conn_desc(&event->disconnect.conn);
 
+            // remove the L2CAP connection
             conn_idx = l2cap_conn_find_idx(event->disconnect.conn.conn_handle);
             if(conn_idx != -1){
                 l2cap_conn_delete_idx(conn_idx);
@@ -936,21 +935,20 @@ void app_main(void){
     ble_hs_cfg.sync_cb = on_host_contr_sync;
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
     ble_hs_cfg.sm_sc = 0;
-    ble_store_config_init();
     nimble_port_freertos_init(host_task_func);
 
     ble_l2cap_create_server(APP_CID, L2CAP_COC_MTU, on_l2cap_event, NULL);
 
-    // Advertising
+    // Set up advertising
     ble_svc_gap_init();
     ret = ble_svc_gap_device_name_set("nimble-device");
     assert(ret == 0);
-    // params.conn_mode = BLE_GAP_CONN_MODE_UND;
-    // params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    // params.itvl_min = 0;
-    // params.itvl_max = 0;
-    // params.channel_map = 0;
-    //ble_gap_adv_set_data
-    // ret = adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &params, false);
-    // assert(ret == 0);
+    memset(&adv_params, 0, sizeof(adv_params));
+    adv_params.params.conn_mode = BLE_GAP_CONN_MODE_UND;
+    adv_params.params.disc_mode = BLE_GAP_DISC_MODE_GEN;
+    // Start advertising
+    ret = adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &adv_params.params, false);
+    assert(ret == 0);
+
+    return;
 }
