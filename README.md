@@ -8,11 +8,9 @@
 
 ## 1. Prerequisites
 
-### Hardware:
 - Microcontroller: [SBC-NodeMCU ESP32](https://joy-it.net/en/products/SBC-NodeMCU-ESP32)
-- Android device: Android 6.0 or higher
+- Android device: Android 6.0 or higher <!-- TODO update version -->
 
-### Software:
 - ESP-IDF: follow the [Get-Started-Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html)
 	- to follow this README it's recommended to [install the software manually](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html)
 	- after installing you should [build mbedtls](https://tls.mbed.org/kb/compiling-and-building/how-do-i-build-compile-mbedtls) in `esp/esp-idf/components/mbedtls/mbedtls/`, this is necessary to run certificate and key generation later
@@ -21,7 +19,7 @@
 
 ## 2. Before Building
 
-### Generate the Certificate Chain:
+You have to generate the certificates for the client and server application:
 - **if using Linux/MacOS**:
 	- in `secure-ble-for-esp32-android` run the following (for more information look into `gen_cert_chain.sh`)
 		```
@@ -54,7 +52,17 @@
 		mbedtls_cert_write issuer_crt=ca.crt subject_key=bike_srv.key subject_name=CN=fb_steigtum_bike_srv,O=tubaf,C=de output_file=bike_srv.crt
 		```
 	- in dir `l2cap_server` make the dir `spiffs_image/crypto`
-	- copy `bike_srv.key`, `bike_srv.crt` and `ca.crt` from dir `certs` into the dir <!-- TODO --> `l2cap_server/spiffs_image/crypto`
+	- copy following files from `certs` into into the dir <!-- TODO update dir--> `l2cap_server/spiffs_image/crypto`:
+		- `bike_srv.key`
+		- `bike_srv.crt`
+		- `ca.crt`
+	- in dir `l2cap_client` make the dir <!-- TODO update dir-->`spiffs_image/crypto`
+	- copy following files from `certs` into into the dir <!-- TODO update dir--> `l2cap_client/spiffs_image/crypto`:
+		- `app_clt.crt`
+		- `app_clt.key`
+		- `backend_subscript.crt`
+		- `backend_subscript.key`
+		- `ca.crt`
 	</p>
 	</details>
 
@@ -64,7 +72,7 @@
 
 ### ESP32 App:
 - depends on how you made your choice in the [Get-Started-Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html)
-- Hint: if esp-idf was installed manually, in <!-- TODO --> `l2cap_server` run
+- Hint: if esp-idf was installed manually, in <!-- TODO update dir--> `l2cap_server` run
 	```
 	$ idf.py -p PORT size flash monitor
 	```
@@ -72,7 +80,7 @@
 ### Android App:
 
 ## 4. How It Works
-<!-- Explain TLS over BLE ... -->
+<!-- TODO Explain TLS over BLE ... -->
 
 ## 5. Links and Examples to Get Started
 ### ESP-IDF
@@ -80,8 +88,9 @@
 - [partition table](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/partition-tables.html)
 	- [custom tables](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/partition-tables.html#creating-custom-tables)
 - [SPIFFS Filesystem](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/storage/spiffs.html)
-- SPIFFS example: in your esp directory, path/to/.../esp/esp-idf/examples/storage/spiffsgen
-- GATT server example: in your esp directory, path/to/.../esp/esp-idf/examples/bluetooth/bluedroid/ble/gatt_server
+- SPIFFS example: in your esp directory, `path/to/.../esp/esp-idf/examples/storage/spiffsgen`
+- <!-- TODO Maybe remove -->GATT server example: in your esp directory, `path/to/.../esp/esp-idf/examples/bluetooth/bluedroid/ble/gatt_server`
+- NimBLE btshell example (includes GAP, L2CAP, GATT, but adjustments for esp32 necessary): in your esp dir, `path/to/.../esp/esp-idf/components/bt/host/nimble/nimble/apps/btshell`
 ### mbedtls:
 - [knowledge base / how to](https://tls.mbed.org/kb/how-to) or [knowledge base](https://tls.mbed.org/kb) in general
 	- [mbedtls tutorial](https://tls.mbed.org/kb/how-to/mbedtls-tutorial)
