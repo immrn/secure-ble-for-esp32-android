@@ -21,6 +21,7 @@
 #include "app_l2cap.h"
 #include "ssl_ctx.h"
 
+
 #define CONFIG_BT_NIMBLE_DEBUG
 
 #define SPIFFS_TAG "SPIFFS"
@@ -482,25 +483,23 @@ void app_main(void){
     ble_hs_cfg.sm_sc = 0;
     nimble_port_freertos_init(host_task_func);
 
-    // Create L2CAP server
-    ble_l2cap_create_server(APP_CID, L2CAP_COC_MTU, on_l2cap_event, NULL);
-
     // Create SSL context
     ssl_ctx ctx;
-	ssl_ctx_create(&ctx, "/spiffs/crypto/bike_srv.key", "/spiffs/crypto/bike_srv.crt", "/spiffs/crypto/ca.crt", "fb_steigtum_app_clt", send_data, recv_data, NULL/*TODO*/);
+	// ssl_ctx_create(&ctx, "/spiffs/crypto/bike_srv.key", "/spiffs/crypto/bike_srv.crt", "/spiffs/crypto/ca.crt", "fb_steigtum_app_clt", send_data, recv_data, NULL/*TODO*/);
 
-    // Set up advertising
-    ble_svc_gap_init();
-    ret = ble_svc_gap_device_name_set("nimble-device");
+    // Setup discovering
+    ret = ble_svc_gap_device_name_set("nimble-device-client");
     assert(ret == 0);
-    memset(&adv_params, 0, sizeof(adv_params));
-    adv_params.params.conn_mode = BLE_GAP_CONN_MODE_UND;
-    adv_params.params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    // Start advertising: wait for host and controller getting synchronized
+    
+    struct ble_gap_disc_params disc_params;
+    memset(&disc_params, 0, sizeof(disc_params));
+    disc_params.itvl = BLE_GAP_SCAN_FAST_INTERVAL_MAX;
+    disc_params.window = BLE_GAP_SCAN_FAST_WINDOW;
+    // Start discovering: wait for host and controller getting synchronized
     while(!ble_hs_synced()){
         usleep(50000);
     }
-    ret = adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &adv_params.params, false);
+    ret = ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_GAP_DISC_DUR_DFLT, &disc_params, on_gap_event, NULL);
     assert(ret == 0);
 
     return;

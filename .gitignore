@@ -2,7 +2,9 @@
 
 #Example stuff
 l2cap_server/build/**
+l2cap_server/spiffs_image/**
 l2cap_client/build/**
+l2cap_client/spiffs_image/**
 
 gatt_server/build/**
 gatt_server/tutorial/**
