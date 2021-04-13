@@ -26,6 +26,14 @@
 
 #define SPIFFS_TAG "SPIFFS"
 
+// Address of Bluetooth peer device
+static ble_addr_t peer_bt_addr = {
+    .type = BLE_OWN_ADDR_PUBLIC,
+    .val = { 0xc6, 0x14, 0x62, 0xc4, 0x0a, 0x24 }
+};
+
+// Parameters for GAP discovering
+static struct ble_gap_disc_params disc_params;
 
 // event handling
 
@@ -47,7 +55,7 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
                 print_conn_desc(&desc);
                 l2cap_conn_add(&desc);
             }
-            return 0; //TODO maybe stop advertising
+            return 0;
 
         case BLE_GAP_EVENT_DISCONNECT:
             printf("disconnect; reason=%d ", event->disconnect.reason);
@@ -58,7 +66,11 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
             if(conn_idx != -1){
                 l2cap_conn_delete_idx(conn_idx);
             }
-            return adv_restart(event);
+
+            // restart discovering
+            rc = ble_gap_disc_cancel();
+            assert(rc == 0 || rc == BLE_HS_EALREADY);
+            return ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_HS_FOREVER, &disc_params, on_gap_event, NULL);
 
         case BLE_GAP_EVENT_DISC:
             printf("received advertisement; event_type=%d rssi=%d addr_type=%d addr=",
@@ -67,15 +79,27 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
                 event->disc.addr.type);
             print_addr(event->disc.addr.val);
 
-            /*
-            * There is no adv data to print in case of connectable
-            * directed advertising
-            */
+            // There is no adv data to print in case of connectable directed advertising
             if (event->disc.event_type == BLE_HCI_ADV_RPT_EVTYPE_DIR_IND) {
                 printf("\nConnectable directed advertising event\n");
                 return 0;
             }
             decode_adv_data(event->disc.data, event->disc.length_data, arg);
+            
+            // When target device was discovered, connect
+            bool is_peer_disc = true;
+            for(int i = 0; i < 6; i++){
+                if(event->disc.addr.val[i] != peer_bt_addr.val[i]){
+                    is_peer_disc = false;
+                    break;
+                }
+            }
+            if(is_peer_disc){
+                rc = ble_gap_disc_cancel();
+                assert(rc == 0 || rc == BLE_HS_EALREADY);
+                rc = ble_gap_connect(BLE_OWN_ADDR_PUBLIC, &peer_bt_addr, 500, NULL, on_gap_event, NULL);
+                assert(rc == 0);
+            }
             return 0;
 
         case BLE_GAP_EVENT_CONN_UPDATE:
@@ -488,18 +512,16 @@ void app_main(void){
 	// ssl_ctx_create(&ctx, "/spiffs/crypto/bike_srv.key", "/spiffs/crypto/bike_srv.crt", "/spiffs/crypto/ca.crt", "fb_steigtum_app_clt", send_data, recv_data, NULL/*TODO*/);
 
     // Setup discovering
-    ret = ble_svc_gap_device_name_set("nimble-device-client");
-    assert(ret == 0);
-    
-    struct ble_gap_disc_params disc_params;
     memset(&disc_params, 0, sizeof(disc_params));
     disc_params.itvl = BLE_GAP_SCAN_FAST_INTERVAL_MAX;
     disc_params.window = BLE_GAP_SCAN_FAST_WINDOW;
-    // Start discovering: wait for host and controller getting synchronized
+    disc_params.filter_duplicates = 1;
+    // Wait for host and controller getting synchronized
     while(!ble_hs_synced()){
         usleep(50000);
     }
-    ret = ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_GAP_DISC_DUR_DFLT, &disc_params, on_gap_event, NULL);
+    // Start discovering
+    ret = ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_HS_FOREVER, &disc_params, on_gap_event, NULL);
     assert(ret == 0);
 
     return;

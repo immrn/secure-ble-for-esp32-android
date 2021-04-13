@@ -25,6 +25,8 @@
 
 #define SPIFFS_TAG "SPIFFS"
 
+// Parameters for GAP advertising
+struct ble_gap_adv_params adv_params;
 
 // event handling
 
@@ -46,7 +48,7 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
                 print_conn_desc(&desc);
                 l2cap_conn_add(&desc);
             }
-            return 0; //TODO maybe stop advertising
+            return ble_gap_adv_stop();
 
         case BLE_GAP_EVENT_DISCONNECT:
             printf("disconnect; reason=%d ", event->disconnect.reason);
@@ -57,7 +59,7 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
             if(conn_idx != -1){
                 l2cap_conn_delete_idx(conn_idx);
             }
-            return adv_restart(event);
+            return ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &adv_params, on_gap_event, NULL);
 
         case BLE_GAP_EVENT_DISC:
             printf("received advertisement; event_type=%d rssi=%d addr_type=%d addr=",
@@ -66,10 +68,7 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
                 event->disc.addr.type);
             print_addr(event->disc.addr.val);
 
-            /*
-            * There is no adv data to print in case of connectable
-            * directed advertising
-            */
+            // There is no adv data to print in case of connectable directed advertising
             if (event->disc.event_type == BLE_HCI_ADV_RPT_EVTYPE_DIR_IND) {
                 printf("\nConnectable directed advertising event\n");
                 return 0;
@@ -273,7 +272,7 @@ void on_host_contr_reset(int reason){
 }
 
 void on_host_contr_sync(){
-    //Maybe there are some things TODO here
+    // Maybe there are some things TODO here
 
     MODLOG_DFLT(INFO, "synchronised host and controller\n");
 }
@@ -494,13 +493,15 @@ void app_main(void){
     ret = ble_svc_gap_device_name_set("nimble-device");
     assert(ret == 0);
     memset(&adv_params, 0, sizeof(adv_params));
-    adv_params.params.conn_mode = BLE_GAP_CONN_MODE_UND;
-    adv_params.params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    // Start advertising: wait for host and controller getting synchronized
+    adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
+    adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
+    init_gap_adv_fields();
+    // Wait for host and controller getting synchronized
     while(!ble_hs_synced()){
         usleep(50000);
     }
-    ret = adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &adv_params.params, false);
+    // Start advertising
+    ret = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &adv_params, on_gap_event, NULL);
     assert(ret == 0);
 
     return;

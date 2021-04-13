@@ -1,9 +1,8 @@
 #include "app_gap.h"
 
-int adv_start(uint8_t own_addr_type, const ble_addr_t *direct_addr, int32_t duration_ms, const struct ble_gap_adv_params *params, bool restart){
+int init_gap_adv_fields(){
     struct ble_hs_adv_fields fields;
     const char *name;
-    int rc;
 
     /**
      *  Set the advertisement data included in our advertisements:
@@ -33,46 +32,7 @@ int adv_start(uint8_t own_addr_type, const ble_addr_t *direct_addr, int32_t dura
     // fields.num_uuids16 = 1;
     // fields.uuids16_is_complete = 1;
 
-    rc = ble_gap_adv_set_fields(&fields);
-    assert(rc == 0);
-
-    /* Begin advertising. */
-    if(restart){
-        adv_params.restart = restart;
-        adv_params.own_addr_type = own_addr_type;
-        adv_params.duration_ms = duration_ms;
-
-        if(direct_addr){
-            memcpy(&adv_params.direct_addr, direct_addr, sizeof(adv_params.direct_addr));
-        }
-
-        if(params){
-            memcpy(&adv_params.params, params, sizeof(adv_params.params));
-        }
-    }
-
-    rc = ble_gap_adv_start(own_addr_type, direct_addr, duration_ms, params, on_gap_event, NULL);
-    return rc;
-}
-
-int adv_stop(void){
-    adv_params.restart = false;
-
-    int rc = ble_gap_adv_stop();
-    return rc;
-}
-
-int adv_restart(struct ble_gap_event *event){
-    if (event->type != BLE_GAP_EVENT_DISCONNECT) {
-        return -1;
-    }
-
-    if (!adv_params.restart) {
-        return 0;
-    }
-
-    int rc = ble_gap_adv_start(adv_params.own_addr_type, &adv_params.direct_addr, adv_params.duration_ms, &adv_params.params, on_gap_event, NULL);
-    return rc;
+    return ble_gap_adv_set_fields(&fields);
 }
 
 void print_conn_desc(const struct ble_gap_conn_desc *desc){
@@ -214,15 +174,9 @@ void print_adv_fields(const struct ble_hs_adv_fields *fields){
 }
 
 void decode_adv_data(const uint8_t *adv_data, uint8_t adv_data_len, void *arg){
-    struct scan_opts *scan_opts = arg;
     struct ble_hs_adv_fields fields;
 
     printf(" data_length=%d data=", adv_data_len);
-
-    if(scan_opts){
-        adv_data_len = min(adv_data_len, scan_opts->limit);
-    }
-
     print_bytes(adv_data, adv_data_len);
 
     printf(" fields:\n");
