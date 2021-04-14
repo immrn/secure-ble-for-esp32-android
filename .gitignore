@@ -6,28 +6,11 @@ l2cap_server/spiffs_image/**
 l2cap_client/build/**
 l2cap_client/spiffs_image/**
 
-gatt_server/build/**
-gatt_server/tutorial/**
-gatt_server/spiffs_image/**
-
-l2cap-from-btshell/build/**
-bleprph/build/**
-
-btshell/**
-btshell-test/**
-ble_spp_server/**
-ble_spp_client/**
-l2cap_socket_server/**
-
-
 #Editors
 .vscode
 
 #Certificates and keys
 certs/**
-
-#ESP32 app spiffs image
-# TODO
 
 #private files
 todo.md
