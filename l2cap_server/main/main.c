@@ -28,6 +28,14 @@
 // Parameters for GAP advertising
 struct ble_gap_adv_params adv_params;
 
+// I/O Context for mbedtls
+typedef struct{
+    // TODO mbedtls
+    struct l2cap_conn* conn;
+    uint16_t idx;               // COC index
+    struct os_mbuf* sdu_rx;
+} io_ctx;
+
 // event handling
 
 int on_gap_event(struct ble_gap_event *event, void *arg){
@@ -36,7 +44,7 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
     int rc;
 
     switch (event->type){
-        case BLE_GAP_EVENT_CONNECT:
+        case BLE_GAP_EVENT_CONNECT:{
             printf("connection %s; status=%d ",
                 event->connect.status == 0 ? "established" : "failed",
                 event->connect.status);
@@ -47,10 +55,14 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
                 assert(rc == 0);
                 print_conn_desc(&desc);
                 l2cap_conn_add(&desc);
+                if(ble_gap_adv_active()){
+                    rc = ble_gap_adv_stop();
+                    assert(rc == 0);
+                }
             }
-            return ble_gap_adv_stop();
-
-        case BLE_GAP_EVENT_DISCONNECT:
+            return 0;
+        }
+        case BLE_GAP_EVENT_DISCONNECT:{
             printf("disconnect; reason=%d ", event->disconnect.reason);
             print_conn_desc(&event->disconnect.conn);
 
@@ -60,8 +72,8 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
                 l2cap_conn_delete_idx(conn_idx);
             }
             return ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &adv_params, on_gap_event, NULL);
-
-        case BLE_GAP_EVENT_DISC:
+        }
+        case BLE_GAP_EVENT_DISC:{
             printf("received advertisement; event_type=%d rssi=%d addr_type=%d addr=",
                 event->disc.event_type,
                 event->disc.rssi,
@@ -75,20 +87,20 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
             }
             decode_adv_data(event->disc.data, event->disc.length_data, arg);
             return 0;
-
-        case BLE_GAP_EVENT_CONN_UPDATE:
+        }
+        case BLE_GAP_EVENT_CONN_UPDATE:{
             printf("connection updated; status=%d ", event->conn_update.status);
             rc = ble_gap_conn_find(event->conn_update.conn_handle, &desc);
             assert(rc == 0);
             print_conn_desc(&desc);
             return 0;
-
-        case BLE_GAP_EVENT_CONN_UPDATE_REQ:
+        }
+        case BLE_GAP_EVENT_CONN_UPDATE_REQ:{
             printf("connection update request\n");
             *event->conn_update_req.self_params = *event->conn_update_req.peer_params;
             return 0;
-
-        case BLE_GAP_EVENT_PASSKEY_ACTION:
+        }
+        case BLE_GAP_EVENT_PASSKEY_ACTION:{
             printf("passkey action event; action=%d",
                         event->passkey.params.action);
             if(event->passkey.params.action == BLE_SM_IOACT_NUMCMP){
@@ -97,23 +109,23 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
             }
             printf("\n");
             return 0;
-
-        case BLE_GAP_EVENT_DISC_COMPLETE:
+        }
+        case BLE_GAP_EVENT_DISC_COMPLETE:{
             printf("discovery complete; reason=%d\n", event->disc_complete.reason);
             return 0;
-
-        case BLE_GAP_EVENT_ADV_COMPLETE:
+        }
+        case BLE_GAP_EVENT_ADV_COMPLETE:{
             printf("advertise complete; reason=%d\n", event->adv_complete.reason);
             return 0;
-
-        case BLE_GAP_EVENT_ENC_CHANGE:
+        }
+        case BLE_GAP_EVENT_ENC_CHANGE:{
             printf("encryption change event; status=%d ", event->enc_change.status);
             rc = ble_gap_conn_find(event->enc_change.conn_handle, &desc);
             assert(rc == 0);
             print_conn_desc(&desc);
             return 0;
-
-        case BLE_GAP_EVENT_NOTIFY_RX:
+        }
+        case BLE_GAP_EVENT_NOTIFY_RX:{
             printf("notification rx event; attr_handle=%d indication=%d len=%d data=",
                 event->notify_rx.attr_handle,
                 event->notify_rx.indication,
@@ -121,15 +133,15 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
             print_mbuf(event->notify_rx.om);
             printf("\n");
             return 0;
-
-        case BLE_GAP_EVENT_NOTIFY_TX:
+        }
+        case BLE_GAP_EVENT_NOTIFY_TX:{
             printf("notification tx event; status=%d attr_handle=%d indication=%d\n",
                 event->notify_tx.status,
                 event->notify_tx.attr_handle,
                 event->notify_tx.indication);
             return 0;
-
-        case BLE_GAP_EVENT_SUBSCRIBE:
+        }
+        case BLE_GAP_EVENT_SUBSCRIBE:{
             printf("subscribe event; conn_handle=%d attr_handle=%d reason=%d prevn=%d curn=%d previ=%d curi=%d\n",
                 event->subscribe.conn_handle,
                 event->subscribe.attr_handle,
@@ -139,30 +151,30 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
                 event->subscribe.prev_indicate,
                 event->subscribe.cur_indicate);
             return 0;
-
-        case BLE_GAP_EVENT_MTU:
+        }
+        case BLE_GAP_EVENT_MTU:{
             printf("mtu update event; conn_handle=%d cid=%d mtu=%d\n",
                 event->mtu.conn_handle,
                 event->mtu.channel_id,
                 event->mtu.value);
             return 0;
-
-        case BLE_GAP_EVENT_IDENTITY_RESOLVED:
+        }
+        case BLE_GAP_EVENT_IDENTITY_RESOLVED:{
             printf("identity resolved ");
             rc = ble_gap_conn_find(event->identity_resolved.conn_handle, &desc);
             assert(rc == 0);
             print_conn_desc(&desc);
             return 0;
-
-        case BLE_GAP_EVENT_PHY_UPDATE_COMPLETE:
+        }
+        case BLE_GAP_EVENT_PHY_UPDATE_COMPLETE:{
             printf("PHY update complete; status=%d, conn_handle=%d tx_phy=%d, rx_phy=%d\n",
                 event->phy_updated.status,
                 event->phy_updated.conn_handle,
                 event->phy_updated.tx_phy,
                 event->phy_updated.rx_phy);
             return 0;
-
-        case BLE_GAP_EVENT_REPEAT_PAIRING:
+        }
+        case BLE_GAP_EVENT_REPEAT_PAIRING:{
             /* We already have a bond with the peer, but it is attempting to
             * establish a new secure link.  This app sacrifices security for
             * convenience: just throw away the old bond and accept the new link.
@@ -177,7 +189,7 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
             * continue with the pairing operation.
             */
             return BLE_GAP_REPEAT_PAIRING_RETRY;
-
+        }
         default:
             return 0;
     }
@@ -289,10 +301,12 @@ void host_task_func(void *param)
 // mbedtls/ssl_ctx
 
 int send_data(void* ctx, const unsigned char* data, size_t len){
+    // TODO mbedtls
     return 0;
 }
 
 int recv_data(void* ctx, unsigned char* data, size_t len, uint32_t timeout_msec){
+    // TODO mbedtls
     return 0;
 }
 
@@ -485,8 +499,9 @@ void app_main(void){
     ble_l2cap_create_server(APP_CID, L2CAP_COC_MTU, on_l2cap_event, NULL);
 
     // Create SSL context
+    io_ctx io;
     ssl_ctx ctx;
-	ssl_ctx_create(&ctx, "/spiffs/crypto/bike_srv.key", "/spiffs/crypto/bike_srv.crt", "/spiffs/crypto/ca.crt", "fb_steigtum_app_clt", send_data, recv_data, NULL/*TODO*/);
+	ssl_ctx_create(&ctx, "/spiffs/crypto/bike_srv.key", "/spiffs/crypto/bike_srv.crt", "/spiffs/crypto/ca.crt", "fb_steigtum_app_clt", send_data, recv_data, &io);
 
     // Set up advertising
     ble_svc_gap_init();
@@ -495,7 +510,8 @@ void app_main(void){
     memset(&adv_params, 0, sizeof(adv_params));
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    init_gap_adv_fields();
+    ret = init_gap_adv_fields();
+    assert(ret == 0);
     // Wait for host and controller getting synchronized
     while(!ble_hs_synced()){
         usleep(50000);
@@ -503,6 +519,17 @@ void app_main(void){
     // Start advertising
     ret = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &adv_params, on_gap_event, NULL);
     assert(ret == 0);
+
+    // Await L2CAP connection
+    while(l2cap_conns[0].coc_list.slh_first == NULL ){
+        usleep(50000);
+    }
+    io.conn = &l2cap_conns[0];
+    io.idx = 0;
+
+    char* message = malloc(18);
+    message = "Hello from Server";
+    l2cap_send(io.conn->handle, 0, (const unsigned char*) message, 18);
 
     return;
 }

@@ -6,6 +6,8 @@
 #include "../src/ble_hs_priv.h"
 #include "host/ble_l2cap.h"
 
+#include "app_misc.h"
+
 
 #define APP_CID 0xffff
 #define L2CAP_COC_MTU 256
@@ -45,7 +47,7 @@ struct l2cap_conn *l2cap_conn_find(uint16_t handle);
 
 struct l2cap_conn *l2cap_conn_add(struct ble_gap_conn_desc *desc);
 
-void l2cap_conn_delete_idx(int idx);
+void l2cap_conn_delete_idx(int conn_idx);
 
 /*** l2cap coc ***/
 
@@ -63,10 +65,10 @@ int l2cap_create_srv(uint16_t psm, uint16_t mtu, int accept_response);
 
 int l2cap_connect(uint16_t conn_handle, uint16_t psm, uint16_t mtu, uint8_t num);
 
-int l2cap_disconnect(uint16_t conn_handle, uint16_t idx);
+int l2cap_disconnect(uint16_t conn_handle, uint16_t coc_idx);
 
 int l2cap_reconfig(uint16_t conn_handle, uint16_t mtu, uint8_t num, uint8_t idxs[]);
 
-int l2cap_send(uint16_t conn_handle, uint16_t idx, uint16_t bytes);
+int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data, uint16_t len);
 
 int on_l2cap_event(struct ble_l2cap_event *event, void *arg);

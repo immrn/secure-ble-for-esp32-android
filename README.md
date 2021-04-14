@@ -80,6 +80,17 @@ You have to generate the certificates for the client and server application:
 ### Android App:
 
 ## 4. How It Works
+### GAP and L2CAP
+| Server | Client |
+| --- | --- |
+| Start advertising (GAP) | Start discovering (GAP) |
+| | --> Discovered server |
+| | <-- Connecting (GAP) to server |
+| Connected to client (GAP) | Connected to server (GAP) |
+| | <-- Connect to server (L2CAP) |
+| Accepting connection (L2CAP) <-- | |
+| Connected to client (L2CAP) | Connected to server (L2CAP) |
+
 <!-- TODO Explain TLS over BLE ... -->
 
 ## 5. Links and Examples to Get Started

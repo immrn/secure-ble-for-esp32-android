@@ -10,11 +10,11 @@ int l2cap_conn_find_idx(uint16_t handle){
 }
 
 struct l2cap_conn* l2cap_conn_find(uint16_t handle){
-    int idx = l2cap_conn_find_idx(handle);
-    if(idx == -1){
+    int conn_idx = l2cap_conn_find_idx(handle);
+    if(conn_idx == -1){
         return NULL;
     }else{
-        return l2cap_conns + idx;
+        return l2cap_conns + conn_idx;
     }
 }
 
@@ -32,10 +32,10 @@ struct l2cap_conn* l2cap_conn_add(struct ble_gap_conn_desc *desc){
     return conn;
 }
 
-void l2cap_conn_delete_idx(int idx){
-    assert(idx >= 0 && idx < l2cap_conns_num);
+void l2cap_conn_delete_idx(int conn_idx){
+    assert(conn_idx >= 0 && conn_idx < l2cap_conns_num);
 
-    for(int i = idx + 1; i < l2cap_conns_num; i++){
+    for(int i = conn_idx + 1; i < l2cap_conns_num; i++){
         l2cap_conns[i - 1] = l2cap_conns[i];
     }
 
@@ -99,6 +99,7 @@ void l2cap_coc_remove(uint16_t conn_handle, struct ble_l2cap_chan *chan){
 
 void l2cap_coc_recv(struct ble_l2cap_chan *chan, struct os_mbuf *sdu){
     printf("LE CoC SDU received, chan: 0x%08x, data len %d\n", (uint32_t) chan, OS_MBUF_PKTLEN(sdu));
+    print_mbuf_as_string(sdu);
 
     os_mbuf_free_chain(sdu);
     sdu = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool, 0);
@@ -176,7 +177,7 @@ int l2cap_connect(uint16_t conn_handle, uint16_t psm, uint16_t mtu, uint8_t num)
     return ble_l2cap_enhanced_connect(conn_handle, psm, mtu, num, sdu_rx,on_l2cap_event, NULL);
 }
 
-int l2cap_disconnect(uint16_t conn_handle, uint16_t idx){
+int l2cap_disconnect(uint16_t conn_handle, uint16_t coc_idx){
     struct l2cap_conn *conn;
     struct l2cap_coc_struct *coc;
     int i;
@@ -187,7 +188,7 @@ int l2cap_disconnect(uint16_t conn_handle, uint16_t idx){
 
     i = 0;
     SLIST_FOREACH(coc, &conn->coc_list, next){
-        if(i == idx){
+        if(i == coc_idx){
                 break;
         }
         i++;
@@ -237,15 +238,14 @@ int l2cap_reconfig(uint16_t conn_handle, uint16_t mtu, uint8_t num, uint8_t idxs
     return ble_l2cap_reconfig(chans, cnt, mtu);
 }
 
-int l2cap_send(uint16_t conn_handle, uint16_t idx, uint16_t bytes){
+int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data, uint16_t len){
     struct l2cap_conn *conn;
     struct l2cap_coc_struct *coc;
     struct os_mbuf *sdu_tx;
-    uint8_t b[] = {0x00, 0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88, 0x99};
     int i;
     int rc;
 
-    printf("conn=%d, idx=%d, bytes=%d\n", conn_handle, idx, bytes);
+    printf("conn=%d, coc_idx=%d, len=%d\n", conn_handle, coc_idx, len);
 
     conn = l2cap_conn_find(conn_handle);
     if(conn == NULL){
@@ -255,7 +255,7 @@ int l2cap_send(uint16_t conn_handle, uint16_t idx, uint16_t bytes){
 
     i = 0;
     SLIST_FOREACH(coc, &conn->coc_list, next){
-        if(i == idx){
+        if(i == coc_idx){
             break;
         }
         i++;
@@ -276,21 +276,7 @@ int l2cap_send(uint16_t conn_handle, uint16_t idx, uint16_t bytes){
         return 0;
     }
 
-    /* For the testing purpose we fill up buffer with known data, easy
-     * to validate on other side. In this loop we add as many full chunks as we
-     * can
-     */
-    for(i = 0; i < bytes / sizeof(b); i++){
-        rc = os_mbuf_append(sdu_tx, b, sizeof(b));
-        if(rc){
-            printf("Cannot append data %i !\n", i);
-            os_mbuf_free_chain(sdu_tx);
-            return rc;
-        }
-    }
-
-    /* Here we add the rest < sizeof(b) */
-    rc = os_mbuf_append(sdu_tx, b, bytes - (sizeof(b) * i));
+    rc = os_mbuf_append(sdu_tx, data, len);
     if(rc){
         printf("Cannot append data %i !\n", i);
         os_mbuf_free_chain(sdu_tx);

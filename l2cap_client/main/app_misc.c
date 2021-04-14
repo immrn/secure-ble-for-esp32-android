@@ -26,3 +26,13 @@ void print_mbuf(const struct os_mbuf *om){
         om = SLIST_NEXT(om, om_next);
     }
 }
+
+void print_mbuf_as_string(const struct os_mbuf* om){
+    while(om != NULL){
+        for(int i = 0; i < om->om_len; i++){
+            printf("%c", om->om_data[i]);
+        }
+        om = SLIST_NEXT(om, om_next);
+    }
+    printf("\n");
+}
