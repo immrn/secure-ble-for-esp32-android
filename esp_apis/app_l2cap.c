@@ -99,6 +99,8 @@ void l2cap_coc_remove(uint16_t conn_handle, struct ble_l2cap_chan *chan){
 
 void l2cap_coc_recv(struct ble_l2cap_chan *chan, struct os_mbuf *sdu){
     printf("LE CoC SDU received, chan: 0x%08x, data len %d\n", (uint32_t) chan, OS_MBUF_PKTLEN(sdu));
+
+    // TODO MBEDTLS: if using l2cap_coc_recv for mbedtls, remove this print call for less output
     print_mbuf_as_string(sdu);
 
     os_mbuf_free_chain(sdu);
@@ -290,8 +292,9 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
           coc->stalled = true;
         }else{
             printf("Could not send data rc=%d\n", rc);
+            os_mbuf_free_chain(sdu_tx); // TODO STALL ISSUE: In btshell example os_mbuf_free_chain(sdu_tx) was NOT called here.
         }
-        os_mbuf_free_chain(sdu_tx);
+        // TODO STALL ISSUE: In btshell example os_mbuf_free_chain(sdu_tx) was called here. In this case the client would receive an empty packet, if a previous call of l2cap_send is still stalling the channel
     }
 
     return rc;

@@ -1,7 +1,6 @@
 #include <errno.h>
 #include "os/os_mbuf.h"
 #include "os/os_mempool.h"
-//#include "esp_nimble_hci.h"
 #include "host/ble_hs.h"
 #include "../src/ble_hs_priv.h"
 #include "host/ble_l2cap.h"

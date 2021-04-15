@@ -19,6 +19,8 @@
 
 ## 2. Before Building
 
+In `l2cap_client/main/main.c` <!-- TODO --> change `peer_bt_addr` to the address the client shall connect to.
+
 You have to generate the certificates for the client and server application:
 - **if using Linux/MacOS**:
 	- in `secure-ble-for-esp32-android` run the following (for more information look into `gen_cert_chain.sh`)

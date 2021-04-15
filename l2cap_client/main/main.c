@@ -22,9 +22,12 @@
 #include "ssl_ctx.h"
 
 
+
 #define CONFIG_BT_NIMBLE_DEBUG
 
 #define SPIFFS_TAG "SPIFFS"
+
+
 
 // Address of Bluetooth peer device
 static ble_addr_t peer_bt_addr = {
@@ -37,13 +40,12 @@ static struct ble_gap_disc_params disc_params;
 
 // I/O Context for mbedtls
 typedef struct{
-    // TODO mbedtls
-    struct ble_l2cap_chan* chan;
-    struct os_mbuf* sdu_rx;
+    // TODO MBEDTLS
+    struct l2cap_conn* conn;
+    uint16_t coc_idx;
 } io_ctx;
 
 
-// event handling
 
 int on_gap_event(struct ble_gap_event *event, void *arg){
     struct ble_gap_conn_desc desc;
@@ -323,12 +325,20 @@ void host_task_func(void *param)
 // mbedtls/ssl_ctx
 
 int send_data(void* ctx, const unsigned char* data, size_t len){
-    // TODO mbedtls
+    int rc;
+    io_ctx* io = ctx;
+
+    // TODO MBEDTLS
+
     return 0;
 }
 
 int recv_data(void* ctx, unsigned char* data, size_t len, uint32_t timeout_msec){
-    // TODO mbedtls
+    int rc;
+    io_ctx* io = ctx;
+
+    // TODO MBEDTLS
+
     return 0;
 }
 

@@ -10,7 +10,7 @@
 
 # Args:
 #    Arg 1: path to the esp directory (esp dir contains the esp-idf dir)
-#       - e.g.: if your esp dir is located at /home/USER/esp, then run ./gen_cert_chain /home/USER/esp
+#       - e.g.: if your esp dir is located in /home/USER/, then run ./gen_cert_chain /home/USER/esp
 
 esp_app_dir="l2cap_server" # TODO: adjust dir name
 client_dir="l2cap_client" # TODO: adjust dir name

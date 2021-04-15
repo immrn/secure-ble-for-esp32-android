@@ -21,22 +21,25 @@
 #include "app_l2cap.h"
 #include "ssl_ctx.h"
 
+
+
 #define CONFIG_BT_NIMBLE_DEBUG
 
 #define SPIFFS_TAG "SPIFFS"
+
+
 
 // Parameters for GAP advertising
 struct ble_gap_adv_params adv_params;
 
 // I/O Context for mbedtls
 typedef struct{
-    // TODO mbedtls
+    // TODO MBEDTLS: maybe add more fields
     struct l2cap_conn* conn;
-    uint16_t idx;               // COC index
-    struct os_mbuf* sdu_rx;
+    uint16_t coc_idx;               // COC index
 } io_ctx;
 
-// event handling
+
 
 int on_gap_event(struct ble_gap_event *event, void *arg){
     struct ble_gap_conn_desc desc;
@@ -301,12 +304,41 @@ void host_task_func(void *param)
 // mbedtls/ssl_ctx
 
 int send_data(void* ctx, const unsigned char* data, size_t len){
-    // TODO mbedtls
-    return 0;
+    int rc;
+    uint16_t compatible_len;
+    io_ctx* io = ctx;
+
+    // l2cap_send would fail if len > L2CAP_COC_MTU
+    if(len > L2CAP_COC_MTU){
+        compatible_len = L2CAP_COC_MTU;
+    }else{
+        compatible_len = (uint16_t)len;
+    }
+
+    /* 
+     * TODO STALL ISSUE: Not quite sure if this is the right solution to wait for the channel becoming unstalled.
+     * The task needs to reset the watchdog in time.
+     * So "while(1);"-loops will result in a crash if they last too long.
+     * Maybe this can be modified in the esp-config.
+     */
+    while(io->conn->coc_list.slh_first->stalled);
+    // l2cap_send doesn't return the bytes sent
+    rc = l2cap_send(io->conn->handle, io->coc_idx, data, compatible_len);
+
+    if(rc != 0 || rc != BLE_HS_ESTALLED){
+        return -1;
+    }
+
+    // Return the bytes that were sent
+    return compatible_len;
 }
 
 int recv_data(void* ctx, unsigned char* data, size_t len, uint32_t timeout_msec){
-    // TODO mbedtls
+    int rc;
+    io_ctx* io = ctx;
+    
+    // TODO MBEDTLS:
+
     return 0;
 }
 
@@ -520,16 +552,80 @@ void app_main(void){
     ret = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &adv_params, on_gap_event, NULL);
     assert(ret == 0);
 
+    // TODO: solve this better
     // Await L2CAP connection
     while(l2cap_conns[0].coc_list.slh_first == NULL ){
         usleep(50000);
     }
     io.conn = &l2cap_conns[0];
-    io.idx = 0;
+    io.coc_idx = 0;
 
-    char* message = malloc(18);
-    message = "Hello from Server";
-    l2cap_send(io.conn->handle, 0, (const unsigned char*) message, 18);
+    /*** Test sending ***/
+
+    // Send message 1
+    char* message = (char*)malloc(18 * sizeof(char));
+    if(message == NULL){
+        printf("Failed to alloc memory\n");
+        free(message);
+        return;
+    }
+    strcpy(message, "Hello from Server!");
+
+    /* 
+     * TODO STALL ISSUE: Not quite sure if this is the right solution to wait for the channel becoming unstalled.
+     * The task needs to reset the watchdog in time.
+     * So "while(1);"-loops will result in a crash if they last too long.
+     * Maybe this can be modified in the esp-config.
+     */
+    while(io.conn->coc_list.slh_first->stalled);
+    l2cap_send(io.conn->handle, io.coc_idx, (const unsigned char*) message, 18);
+
+    // Send message 2
+    message = (char*)realloc(message, 25 * sizeof(char));
+    if(message == NULL){
+        printf("Failed to alloc memory\n");
+        free(message);
+        return;
+    }
+    strcpy(message, "Second Hello from Server!");
+
+    /* 
+     * TODO STALL ISSUE: Not quite sure if this is the right solution to wait for the channel becoming unstalled.
+     * The task needs to reset the watchdog in time.
+     * So "while(1);"-loops will result in a crash if they last too long.
+     * Maybe this can be modified in the esp-config.
+     */
+    while(io.conn->coc_list.slh_first->stalled);
+    l2cap_send(io.conn->handle, io.coc_idx, (const unsigned char*) message, 25);
+
+    // Send message 3
+    int len = L2CAP_COC_MTU;
+    message = (char*)realloc(message, len * sizeof(char));
+    if(message == NULL){
+        printf("Failed to alloc memory\n");
+        free(message);
+        return;
+    }
+
+    FILE* f = fopen("/spiffs/crypto/bike_srv.crt", "r");
+    if(f == NULL){
+        printf("Can't open file\n");
+        return;
+    }
+    fread(message, len, sizeof(char), f);
+    fclose(f);
+
+    /* 
+     * TODO STALL ISSUE: Not quite sure if this is the right solution to wait for the channel becoming unstalled.
+     * The task needs to reset the watchdog in time.
+     * So "while(1);"-loops will result in a crash if they last too long.
+     * Maybe this can be modified in the esp-config.
+     */
+    while(io.conn->coc_list.slh_first->stalled);
+    l2cap_send(io.conn->handle, io.coc_idx, (const unsigned char*) message, len);
+
+    sleep(1);
+    free(message);
 
     return;
 }
