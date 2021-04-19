@@ -71,3 +71,5 @@ int l2cap_reconfig(uint16_t conn_handle, uint16_t mtu, uint8_t num, uint8_t idxs
 int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data, uint16_t len);
 
 int on_l2cap_event(struct ble_l2cap_event *event, void *arg);
+
+int l2cap_send_test(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data, uint16_t len, int iterator);

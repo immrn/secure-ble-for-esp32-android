@@ -299,3 +299,62 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
 
     return rc;
 }
+
+int l2cap_send_test(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data, uint16_t len, int iterator){
+    struct l2cap_coc_struct *coc;
+    struct l2cap_conn *conn;
+    struct os_mbuf *sdu_tx;
+
+    printf("conn=%d, coc_idx=%d, len=%d, iterator=%d\n", conn_handle, coc_idx, len, iterator);
+
+    sdu_tx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool, 0);
+    if (!sdu_tx) {
+        puts("[nim] send: error - unable to allocate mbuf");
+        return 1;
+    }
+
+    conn = l2cap_conn_find(conn_handle);
+    if(conn == NULL){
+        printf("conn=%d does not exist\n", conn_handle);
+        return 0;
+    }
+
+    int i = 0;
+    SLIST_FOREACH(coc, &conn->coc_list, next){
+        if(i == coc_idx){
+            break;
+        }
+        i++;
+    }
+    if(coc == NULL){
+        printf("Are you sure your channel exist?\n");
+        return 0;
+    }
+
+    int res = os_mbuf_append(sdu_tx, data, len);
+    if (res != 0) {
+        os_mbuf_free_chain(sdu_tx);
+        printf("[nim] send: error - unable to append data (%i)\n", res);
+        return res;
+    }
+
+    do {
+        ble_hs_lock();
+        res = ble_l2cap_send(coc->chan, sdu_tx);
+        ble_hs_unlock();
+        // TODO other solution to locking/unlocking may be a queue?
+    } while (res == BLE_HS_EBUSY);
+
+    if (res != 0) {
+        if(res == BLE_HS_ESTALLED){
+            return res;
+        }
+        os_mbuf_free_chain(sdu_tx);
+        printf("[nim] send: error - unable to send SDU (%i)\n", res);
+    }
+    else {
+        printf("[nim] send: OK - #%u\n", coc_idx);
+    }
+
+    return res;
+}
