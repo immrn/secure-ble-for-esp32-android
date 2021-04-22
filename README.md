@@ -1,10 +1,10 @@
 # secure-ble-for-esp32-android
-1. [Prerequisites](#1.-Prerequisites)
-2. [Before Building](#2.-Before-Building)
-3. [Build](#3.-Build)
-4. [How It Works](#4.-How-It-Works)
-5. [Links and Examples to Get Started](#5.-Links-and-Examples-to-Get-Started)
-6. [Continuation](#6.-Continuation)
+1. [Prerequisites](#1-Prerequisites)
+2. [Before Building](#2-Before-Building)
+3. [Build](#3-Build)
+4. [How It Works](#4-How-It-Works)
+5. [Links and Examples to Get Started](#5-Links-and-Examples-to-Get-Started)
+6. [Continuation](#6-Continuation)
 
 ## 1. Prerequisites
 
