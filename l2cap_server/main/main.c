@@ -21,6 +21,8 @@
 #include "app_l2cap.h"
 #include "ssl_ctx.h"
 
+// for Debugging, TODO remove
+#include <sys/time.h>
 
 
 #define CONFIG_BT_NIMBLE_DEBUG
@@ -64,6 +66,9 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
                     assert(rc == 0);
                 }
             }
+
+            printf("GAP runs at core %d\n", xPortGetCoreID()); //TODO CORE
+
             return 0;
         }
         case BLE_GAP_EVENT_DISCONNECT:{
@@ -220,6 +225,8 @@ int on_l2cap_event(struct ble_l2cap_event *event, void *arg){
 
             l2cap_coc_add(event->connect.conn_handle, event->connect.chan);
 
+            printf("L2CAP runs at core %d\n", xPortGetCoreID()); //TODO CORE
+
             return 0;
         }
         case BLE_L2CAP_EVENT_COC_DISCONNECTED:{
@@ -295,6 +302,8 @@ void on_host_contr_sync(){
 
 void host_task_func(void *param)
 {
+    printf("NimBLE host runs at core %d\n", xPortGetCoreID()); //TODO CORE
+
     ESP_LOGI("NIMBLE", "BLE Host Task Started");
     // This function will return only when nimble_port_stop() is executed
     nimble_port_run();
@@ -316,13 +325,6 @@ int send_data(void* ctx, const unsigned char* data, size_t len){
         compatible_len = (uint16_t)len;
     }
 
-    /* 
-     * TODO STALL ISSUE: Not quite sure if this is the right solution to wait for the channel becoming unstalled.
-     * The task needs to reset the watchdog in time.
-     * So "while(1);"-loops will result in a crash if they last too long.
-     * Maybe this can be modified in the esp-config.
-     */
-    while(io->conn->coc_list.slh_first->stalled);
     // l2cap_send doesn't return the bytes sent
     rc = l2cap_send(io->conn->handle, io->coc_idx, data, compatible_len);
 
@@ -484,13 +486,6 @@ void test_sending_1(io_ctx* io){
     }
     strcpy(message, "Hello from Server!");
 
-    /* 
-     * TODO STALL ISSUE: Not quite sure if this is the right solution to wait for the channel becoming unstalled.
-     * The task needs to reset the watchdog in time.
-     * So "while(1);"-loops will result in a crash if they last too long.
-     * Maybe this can be modified in the esp-config.
-     */
-    while(io->conn->coc_list.slh_first->stalled);
     l2cap_send(io->conn->handle, io->coc_idx, (const unsigned char*) message, 18);
 
     // Send message 2
@@ -502,13 +497,6 @@ void test_sending_1(io_ctx* io){
     }
     strcpy(message, "Second Hello from Server!");
 
-    /* 
-     * TODO STALL ISSUE: Not quite sure if this is the right solution to wait for the channel becoming unstalled.
-     * The task needs to reset the watchdog in time.
-     * So "while(1);"-loops will result in a crash if they last too long.
-     * Maybe this can be modified in the esp-config.
-     */
-    while(io->conn->coc_list.slh_first->stalled);
     l2cap_send(io->conn->handle, io->coc_idx, (const unsigned char*) message, 25);
 
     // Send message 3
@@ -528,13 +516,6 @@ void test_sending_1(io_ctx* io){
     fread(message, len, sizeof(char), f);
     fclose(f);
 
-    /* 
-     * TODO STALL ISSUE: Not quite sure if this is the right solution to wait for the channel becoming unstalled.
-     * The task needs to reset the watchdog in time.
-     * So "while(1);"-loops will result in a crash if they last too long.
-     * Maybe this can be modified in the esp-config.
-     */
-    while(io->conn->coc_list.slh_first->stalled);
     l2cap_send(io->conn->handle, io->coc_idx, (const unsigned char*) message, len);
 
     free(message);
@@ -544,20 +525,39 @@ void test_sending_2(io_ctx* io){
     char* message = (char*)malloc(11 * sizeof(char));
     strcpy(message, "Message ");
     char* counter = (char*)malloc(12 * sizeof(char));
-    for(int i = 0; i < 200; i++){
+
+    struct timeval start_time;
+    struct timeval stop_time;
+    gettimeofday(&start_time, NULL);
+    for(int i = 0; i < 100; i++){
         sprintf(counter, "%d", i);
         strncat(message, counter, 3);
         l2cap_send_test(io->conn->handle, io->coc_idx, (const unsigned char*) message, 11, i);
         strcpy(message, "Message ");
     }
+    gettimeofday(&stop_time, NULL);
+    int long sec_diff = stop_time.tv_sec - start_time.tv_sec;
+    int long usec_diff;
+    if(stop_time.tv_usec >= start_time.tv_usec){
+        usec_diff = stop_time.tv_usec - start_time.tv_usec;
+    }
+    else{
+        usec_diff = 1000000 - start_time.tv_usec + stop_time.tv_usec;
+    }
+    printf("Time needed to send flood: %ld,%ld seconds\n", sec_diff, usec_diff);
+
 
     sleep(1);
     free(counter);
     free(message);
 }
 
+
+
 void app_main(void){
     int ret;
+
+    printf("App runs at core %d\n", xPortGetCoreID()); //TODO CORE
 
     // Heap
     ret = heap_caps_register_failed_alloc_callback(failed_alloc_cb);
@@ -617,15 +617,19 @@ void app_main(void){
     assert(ret == 0);
     ret = os_mbuf_pool_init(&sdu_os_mbuf_pool, &sdu_coc_mbuf_mempool, L2CAP_COC_MTU, L2CAP_COC_BUF_COUNT);
     assert(ret == 0);
-    ret = os_mempool_init(&l2cap_coc_conn_pool, MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM), sizeof (struct l2cap_coc_struct), l2cap_coc_conn_mem, "l2cap_coc_conn_pool");
+    ret = os_mempool_init(&l2cap_coc_conn_pool, MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM), sizeof (struct l2cap_coc_node), l2cap_coc_conn_mem, "l2cap_coc_conn_pool");
     assert(ret == 0);
 
-    // Initialize the NimBLE host configuration
+    // Initialize the NimBLE host configuration.
     ble_hs_cfg.reset_cb = on_host_contr_reset;
     ble_hs_cfg.sync_cb = on_host_contr_sync;
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
     ble_hs_cfg.sm_sc = 0;
+    // Let BLE host run in a new created task. To run the BLE host in the current task, read the comment of esp_nimble_hci_and_controller_init().
     nimble_port_freertos_init(host_task_func);
+
+    printf("mempool free  blocks: %d\n", sdu_coc_mbuf_mempool.mp_num_free);
+    sleep(1);
 
     // Create L2CAP server
     ret = ble_l2cap_create_server(APP_CID, L2CAP_COC_MTU, on_l2cap_event, NULL);
@@ -668,9 +672,13 @@ void app_main(void){
     size_t heap_curr;
     size_t heap_start = heap_caps_get_free_size(MALLOC_CAP_8BIT);
     ESP_LOGI(HEAP_TAG, "Heap before memory allocation and sending:\t%zu", heap_start);
-
-    test_sending_1(&io);
     sleep(1);
+
+    printf("mempool free  blocks: %d\n", sdu_coc_mbuf_mempool.mp_num_free);
+    sleep(1);
+    test_sending_1(&io);
+    printf("mempool free  blocks: %d\n", sdu_coc_mbuf_mempool.mp_num_free);
+    sleep(3);
 
     test_sending_2(&io);
     sleep(1);

@@ -82,7 +82,7 @@ You have to generate the certificates for the client and server application:
 ### Android App:
 
 ## 4. How It Works
-### GAP and L2CAP
+### GAP and L2CAP (NimBLE)
 | Server | Client |
 | --- | --- |
 | Start advertising (GAP) | Start discovering (GAP) |
@@ -92,6 +92,15 @@ You have to generate the certificates for the client and server application:
 | | <-- Connect to server (L2CAP) |
 | Accepting connection (L2CAP) <-- | |
 | Connected to client (L2CAP) | Connected to server (L2CAP) |
+
+### ESP
+#### Tasks / Threading
+Because this ESP32 contains a dual core processor FreeRTOS-Tasks are either pinned to PRO_CPU (ID = 0, Protocol CPU) or APP_CPU (ID = 1, Application CPU).
+- PRO_CPU (0) Tasks:
+	- NimBLE Host
+	- the app itself
+- APP_CPU (1) Tasks:
+
 
 <!-- TODO Explain TLS over BLE ... -->
 

@@ -15,13 +15,13 @@
 #define INT_TO_PTR(x)     (void *)((intptr_t)(x))
 #define PTR_TO_INT(x)     (int) ((intptr_t)(x))
 
-struct l2cap_coc_struct{
-    SLIST_ENTRY(l2cap_coc_struct) next;
+struct l2cap_coc_node{
+    SLIST_ENTRY(l2cap_coc_node) next;
     struct ble_l2cap_chan *chan;
-    bool stalled;
+    SemaphoreHandle_t unstalled_semaphore;
 };
 
-SLIST_HEAD(l2cap_coc_list, l2cap_coc_struct);
+SLIST_HEAD(l2cap_coc_list, l2cap_coc_node);
 
 struct l2cap_conn {
     uint16_t handle;
@@ -31,7 +31,7 @@ struct l2cap_conn {
 struct l2cap_conn l2cap_conns[MYNEWT_VAL(BLE_MAX_CONNECTIONS)];
 int l2cap_conns_num;
 
-os_membuf_t l2cap_coc_conn_mem[OS_MEMPOOL_SIZE(MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM), sizeof(struct l2cap_coc_struct))];
+os_membuf_t l2cap_coc_conn_mem[OS_MEMPOOL_SIZE(MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM), sizeof(struct l2cap_coc_node))];
 struct os_mempool l2cap_coc_conn_pool;
 
 os_membuf_t l2cap_sdu_coc_mem[OS_MEMPOOL_SIZE(L2CAP_COC_BUF_COUNT, L2CAP_COC_MTU)];

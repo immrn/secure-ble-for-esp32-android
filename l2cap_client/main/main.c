@@ -26,7 +26,7 @@
 #define CONFIG_BT_NIMBLE_DEBUG
 
 #define SPIFFS_TAG "SPIFFS"
-
+#define HEAP_TAG "HEAP"
 
 
 // Address of Bluetooth peer device
@@ -464,10 +464,26 @@ int verify_subscription(ssl_ctx* ctx)
 	return 1;
 }
 
+// Heap
+
+static void failed_alloc_cb(size_t size, uint32_t caps, const char* func_name){
+    ESP_LOGE(HEAP_TAG, "Failed to allocate %zu bytes in %s", size, func_name);
+    return;
+}
+
 
 
 void app_main(void){
     int ret;
+
+    // Heap
+    ret = heap_caps_register_failed_alloc_callback(failed_alloc_cb);
+    if(ret){
+        ESP_LOGE(HEAP_TAG, "heap_caps_register_failed_alloc_callback() failed (%s)", esp_err_to_name(ret));
+    }
+    // Check heap
+    ESP_LOGI(HEAP_TAG, "Free bytes in (data memory) heap:\t\t%zu", heap_caps_get_free_size(MALLOC_CAP_8BIT));
+    ESP_LOGI(HEAP_TAG, "Largest free block in (data memory) heap:\t%zu", heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
 
     // Setup and mount SPIFFS
     ESP_LOGI(SPIFFS_TAG, "Initializing SPIFFS");
@@ -517,7 +533,7 @@ void app_main(void){
     assert(ret == 0);
     ret = os_mbuf_pool_init(&sdu_os_mbuf_pool, &sdu_coc_mbuf_mempool, L2CAP_COC_MTU, L2CAP_COC_BUF_COUNT);
     assert(ret == 0);
-    ret = os_mempool_init(&l2cap_coc_conn_pool, MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM), sizeof (struct l2cap_coc_struct), l2cap_coc_conn_mem, "l2cap_coc_conn_pool");
+    ret = os_mempool_init(&l2cap_coc_conn_pool, MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM), sizeof (struct l2cap_coc_node), l2cap_coc_conn_mem, "l2cap_coc_conn_pool");
     assert(ret == 0);
 
     // Initialize the NimBLE host configuration
@@ -526,6 +542,9 @@ void app_main(void){
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
     ble_hs_cfg.sm_sc = 0;
     nimble_port_freertos_init(host_task_func);
+
+    printf("mempool free  blocks: %d, L2CAP COC BUF COUNT = %d\n", sdu_coc_mbuf_mempool.mp_num_free, L2CAP_COC_BUF_COUNT);
+    sleep(1);
 
     // Create SSL context
     io_ctx io;
@@ -545,6 +564,30 @@ void app_main(void){
     // Start discovering
     ret = ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_HS_FOREVER, &disc_params, on_gap_event, NULL);
     assert(ret == 0);
+
+    // TODO: solve this better
+    // Await L2CAP connection
+    while(l2cap_conns[0].coc_list.slh_first == NULL ){
+        usleep(50000);
+    }
+    io.conn = &l2cap_conns[0];
+    io.coc_idx = 0;
+
+    /*** Test sending ***/
+
+    // Check heap
+    int32_t heap_diff;
+    size_t heap_curr;
+    size_t heap_start = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    ESP_LOGI(HEAP_TAG, "Heap before memory allocation and sending:\t%zu", heap_start);
+
+    sleep(6);
+
+    // Check heap
+    heap_curr = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    ESP_LOGI(HEAP_TAG, "Heap curr:\t%zu", heap_curr);
+    heap_diff = heap_curr - heap_start;
+    ESP_LOGI(HEAP_TAG, "Heap diff:\t%d", heap_diff);
 
     return;
 }
