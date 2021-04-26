@@ -43,6 +43,34 @@ void l2cap_conn_delete_idx(int conn_idx){
 }
 
 /*** l2cap coc ***/
+struct l2cap_coc_node* l2cap_coc_find(struct l2cap_conn* conn, struct ble_l2cap_chan* chan){
+    struct l2cap_coc_node* coc;
+    struct l2cap_coc_node* cur;
+
+    coc = NULL;
+    SLIST_FOREACH(cur, &conn->coc_list, next){
+        if(cur->chan == chan){
+            coc = cur;
+            break;
+        }
+    }
+
+    return coc;
+}
+
+struct l2cap_coc_node* l2cap_coc_find_by_idx(struct l2cap_conn* conn, uint16_t coc_idx){
+    struct l2cap_coc_node *coc;
+
+    int i = 0;
+    SLIST_FOREACH(coc, &conn->coc_list, next){
+        if(i == coc_idx){
+            break;
+        }
+        i++;
+    }
+
+    return coc;
+}
 
 int l2cap_coc_add(uint16_t conn_handle, struct ble_l2cap_chan *chan){
     struct l2cap_conn *conn;
@@ -60,8 +88,10 @@ int l2cap_coc_add(uint16_t conn_handle, struct ble_l2cap_chan *chan){
     // Initialize COC node
     coc->chan = chan;
     coc->unstalled_semaphore = xSemaphoreCreateBinary();
+    coc->received_data_semaphore = xSemaphoreCreateBinary();
     // NULL if allocation was unsuccessful
     assert(coc->unstalled_semaphore != NULL);
+    assert(coc->received_data_semaphore != NULL);
 
     prev = NULL;
     SLIST_FOREACH(cur, &conn->coc_list, next){
@@ -78,49 +108,53 @@ int l2cap_coc_add(uint16_t conn_handle, struct ble_l2cap_chan *chan){
 }
 
 void l2cap_coc_remove(uint16_t conn_handle, struct ble_l2cap_chan *chan){
-    struct l2cap_conn *conn;
+    struct l2cap_conn* conn;
     struct l2cap_coc_node *coc;
-    struct l2cap_coc_node *cur;
 
     conn = l2cap_conn_find(conn_handle);
     assert(conn != NULL);
 
-    coc = NULL;
-    SLIST_FOREACH(cur, &conn->coc_list, next){
-        if(cur->chan == chan){
-            coc = cur;
-            break;
-        }
-    }
+    coc = l2cap_coc_find(conn, chan);
+    assert(coc != NULL);
 
-    if(!coc){
-        return;
-    }
-
-    // Free the memory of the semaphore
+    // Free the memory of the semaphores
     vSemaphoreDelete(coc->unstalled_semaphore);
+    vSemaphoreDelete(coc->received_data_semaphore);
 
     SLIST_REMOVE(&conn->coc_list, coc, l2cap_coc_node, next);
     os_memblock_put(&l2cap_coc_conn_pool, coc);
 }
 
-void l2cap_coc_recv(struct ble_l2cap_chan *chan, struct os_mbuf *sdu){
-    printf("LE CoC SDU received, chan: 0x%08x, data len %d\n", (uint32_t) chan, OS_MBUF_PKTLEN(sdu));
+void l2cap_coc_recv(uint16_t conn_handle, struct ble_l2cap_chan *chan, struct os_mbuf *sdu){
+    struct l2cap_conn* conn;
+    struct l2cap_coc_node *coc;
+    struct os_mbuf *sdu_new;
+    static int sdu_count = 0; // TODO DEBUG remove
+    
+    printf("LE CoC SDU received, #%d, chan: 0x%08x, data len %d\n", sdu_count, (uint32_t) chan, OS_MBUF_PKTLEN(sdu));
 
-    // TODO MBEDTLS: if using l2cap_coc_recv for mbedtls, remove this print call for less output
-    print_mbuf_as_string(sdu);
+    // sdu_queue_add(&sdu_queue_rx, sdu);
+    // sdu_queue_print(&sdu_queue_rx);
 
-    printf("mempool free  blocks: %d\n", sdu_coc_mbuf_mempool.mp_num_free);
+    conn = l2cap_conn_find(conn_handle);
+    assert(conn != NULL);
 
-    os_mbuf_free_chain(sdu);
-    sdu = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool, 0);
-    assert(sdu != NULL);
+    coc = l2cap_coc_find(conn, chan);
+    assert(coc != NULL);
 
-    if(ble_l2cap_recv_ready(chan, sdu) != 0){
-        assert(0);
-    }
+    // Signal the COC the arrival of data
+    xSemaphoreGive(coc->received_data_semaphore);
 
-    printf("mempool free  blocks: %d\n", sdu_coc_mbuf_mempool.mp_num_free);
+    // os_mbuf_free_chain(sdu);
+
+    // sdu = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_rx, 0);
+    // assert(sdu != NULL);
+
+    // if(ble_l2cap_recv_ready(chan, sdu) != 0){
+    //     assert(0);
+    // }
+
+    printf("mempool free blocks: rx = %d, tx = %d\n\n", sdu_coc_mbuf_mempool_rx.mp_num_free, sdu_coc_mbuf_mempool_tx.mp_num_free);
 }
 
 int l2cap_coc_accept(uint16_t conn_handle, uint16_t peer_mtu, struct ble_l2cap_chan *chan){
@@ -128,12 +162,16 @@ int l2cap_coc_accept(uint16_t conn_handle, uint16_t peer_mtu, struct ble_l2cap_c
 
     printf("LE CoC accepting, chan: 0x%08x, peer_mtu %d\n", (uint32_t) chan, peer_mtu);
 
-    sdu_rx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool, 0);
-    if(!sdu_rx){
-        return BLE_HS_ENOMEM;
-    }
+    // Commented for mbedtls uses:
 
-    return ble_l2cap_recv_ready(chan, sdu_rx);
+    // sdu_rx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_rx, 0);
+    // if(!sdu_rx){
+    //     return BLE_HS_ENOMEM;
+    // }
+
+    // return ble_l2cap_recv_ready(chan, sdu_rx);
+
+    return 0;
 }
 
 void l2cap_coc_unstalled(uint16_t conn_handle, struct ble_l2cap_chan *chan){
@@ -153,6 +191,7 @@ void l2cap_coc_unstalled(uint16_t conn_handle, struct ble_l2cap_chan *chan){
     }
 
     if(!coc){
+        printf("COC doesn't exist\n");
         return;
     }
 
@@ -179,7 +218,7 @@ int l2cap_connect(uint16_t conn_handle, uint16_t psm, uint16_t mtu, uint8_t num)
     printf("L2CAP CoC MTU: %d, max available %d\n", mtu, L2CAP_COC_MTU);
 
     for(i = 0; i < num; i++){
-        sdu_rx[i] = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool, 0);
+        sdu_rx[i] = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_rx, 0);
         assert(sdu_rx != NULL);
     }
 
@@ -252,6 +291,74 @@ int l2cap_reconfig(uint16_t conn_handle, uint16_t mtu, uint8_t num, uint8_t idxs
 }
 
 int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data, uint16_t len){
+    struct l2cap_coc_node *coc;
+    struct l2cap_conn *conn;
+    struct os_mbuf *sdu_tx;
+
+    printf("mempool free blocks: rx = %d, tx = %d\n", sdu_coc_mbuf_mempool_rx.mp_num_free, sdu_coc_mbuf_mempool_tx.mp_num_free);
+
+    printf("Sending L2CAP packet: connection = %d, COC = %d, len = %d\n", conn_handle, coc_idx, len);
+
+    sdu_tx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_tx, 0);
+    if (!sdu_tx) {
+        printf("ERROR: Unable to allocate mbuf!\n\n");
+        return -1;
+    }
+
+    conn = l2cap_conn_find(conn_handle);
+    assert(conn != NULL);
+
+    coc = l2cap_coc_find(conn, coc_idx);
+    if(coc == NULL){
+        printf("COC = %d doesn't exist!\n\n", coc_idx);
+        return -1;
+    }
+
+    int res = os_mbuf_append(sdu_tx, data, len);
+    if (res != 0) {
+        os_mbuf_free_chain(sdu_tx);
+        printf("ERROR: Unable to append data! (%i)\n\n", res);
+        // NimBLE return code
+        return res;
+    }
+
+    // do {
+    //     ble_hs_lock();
+    //     res = ble_l2cap_send(coc->chan, sdu_tx);
+    //     ble_hs_unlock();
+    //     // TODO other solution to locking/unlocking may be a queue?
+    // } while (res == BLE_HS_EBUSY);
+
+    // Send L2CAP packet. If host is busy (that's when the COC module is still stalled with data), wait for it using a semaphore, that is obtained when the COC runs the unstalled-event.
+    int semaphore_res;
+    do{
+        res = ble_l2cap_send(coc->chan, sdu_tx);
+        if(res == BLE_HS_EBUSY || res == BLE_HS_ESTALLED){
+            semaphore_res = xSemaphoreTake(coc->unstalled_semaphore, portMAX_DELAY);
+            if(semaphore_res == pdTRUE){
+                printf("COC got unstalled.\n");
+            }else{
+                printf("COC is probably still stalled. Timeout on semaphore.\n");
+            }
+        }
+    }
+    while(res == BLE_HS_EBUSY);
+
+    if (res != 0) {
+        if(res == BLE_HS_ESTALLED){
+            // Don't free the mbuf chain of sdu_tx here because it seems like it will be freed automatically when the COC is unstalling.
+            printf("COC is stalled\n");
+        }else{
+            os_mbuf_free_chain(sdu_tx);
+            printf("ERROR: Unable to send SDU! (%i)\n", res);
+        }
+    }
+
+    printf("mempool free blocks: rx = %d, tx = %d\n\n", sdu_coc_mbuf_mempool_rx.mp_num_free, sdu_coc_mbuf_mempool_tx.mp_num_free);
+    return res;
+}
+
+int l2cap_send_old_from_btshell(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data, uint16_t len){
     struct l2cap_conn *conn;
     struct l2cap_coc_node *coc;
     struct os_mbuf *sdu_tx;
@@ -278,7 +385,7 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
         return 0;
     }
 
-    sdu_tx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool, 0);
+    sdu_tx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_tx, 0);
     if (sdu_tx == NULL) {
         printf("No memory in the test sdu pool\n");
         return 0;
@@ -303,86 +410,4 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
     }
 
     return rc;
-}
-
-int l2cap_send_test(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data, uint16_t len, int iterator){
-    struct l2cap_coc_node *coc;
-    struct l2cap_conn *conn;
-    struct os_mbuf *sdu_tx;
-
-    printf("mempool free blocks: %d\n", sdu_coc_mbuf_mempool.mp_num_free);
-
-    // TODO: remove iterator
-    printf("Sending L2CAP packet: connection = %d, COC = %d, len = %d, iterator = %d\n", conn_handle, coc_idx, len, iterator);
-
-    sdu_tx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool, 0);
-    if (!sdu_tx) {
-        printf("ERROR: Unable to allocate mbuf!\n");
-        return -1;
-    }
-
-    conn = l2cap_conn_find(conn_handle);
-    if(conn == NULL){
-        printf("Connection = %d does not exist!\n", conn_handle);
-        return -1;
-    }
-
-    // Get the current COC
-    int i = 0;
-    SLIST_FOREACH(coc, &conn->coc_list, next){
-        if(i == coc_idx){
-            break;
-        }
-        i++;
-    }
-    if(coc == NULL){
-        printf("COC = %d doesn't exist!\n", coc_idx);
-        return -1;
-    }
-
-    int res = os_mbuf_append(sdu_tx, data, len);
-    if (res != 0) {
-        os_mbuf_free_chain(sdu_tx);
-        printf("ERROR: Unable to append data! (%i)\n", res);
-        // NimBLE return code
-        return res;
-    }
-
-    // do {
-    //     ble_hs_lock();
-    //     res = ble_l2cap_send(coc->chan, sdu_tx);
-    //     ble_hs_unlock();
-    //     // TODO other solution to locking/unlocking may be a queue?
-    // } while (res == BLE_HS_EBUSY);
-
-    // Send L2CAP packet. If host is busy (that's when the COC module is still stalled with data), wait for it using a semaphore, that is obtained when the COC runs the unstalled-event.
-    int semaphore_res;
-    do{
-        res = ble_l2cap_send(coc->chan, sdu_tx);
-        if(res == BLE_HS_EBUSY){
-            semaphore_res = xSemaphoreTake(coc->unstalled_semaphore, portMAX_DELAY);
-            if(semaphore_res == pdTRUE){
-                printf("COC got unstalled.\n");
-            }else{
-                printf("COC is probably still stalled. Timeout on semaphore.\n");
-            }
-        }
-    }
-    while(res == BLE_HS_EBUSY);
-
-    if (res != 0) {
-        if(res == BLE_HS_ESTALLED){
-            // Don't free the mbuf chain of sdu_tx here because it seems like it will be freed automatically when the COC is unstalling.
-            printf("COC is stalled\n");
-            printf("mempool free blocks: %d\n\n", sdu_coc_mbuf_mempool.mp_num_free);
-            return res;
-        }
-        os_mbuf_free_chain(sdu_tx);
-        printf("ERROR: Unable to send SDU! (%i)\n", res);
-    }
-
-    printf("mempool free blocks: %d\n", sdu_coc_mbuf_mempool.mp_num_free);
-    printf("\n");
-
-    return res;
 }

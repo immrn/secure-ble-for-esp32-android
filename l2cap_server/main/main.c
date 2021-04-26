@@ -21,7 +21,7 @@
 #include "app_l2cap.h"
 #include "ssl_ctx.h"
 
-// for Debugging, TODO remove
+// TODO DEBUG remove
 #include <sys/time.h>
 
 
@@ -41,6 +41,11 @@ typedef struct{
     struct l2cap_conn* conn;
     uint16_t coc_idx;               // COC index
 } io_ctx;
+
+// TODO DEBUG remove
+int32_t heap_diff;
+size_t heap_curr;
+size_t heap_start;
 
 
 
@@ -244,7 +249,7 @@ int on_l2cap_event(struct ble_l2cap_event *event, void *arg){
             return l2cap_coc_accept(event->accept.conn_handle, event->accept.peer_sdu_size, event->accept.chan);
         }
         case BLE_L2CAP_EVENT_COC_DATA_RECEIVED:{
-            l2cap_coc_recv(event->receive.chan, event->receive.sdu_rx);
+            l2cap_coc_recv(event->receive.conn_handle, event->receive.chan, event->receive.sdu_rx);
             return 0;
         }
         case BLE_L2CAP_EVENT_COC_RECONFIG_COMPLETED:{
@@ -328,21 +333,68 @@ int send_data(void* ctx, const unsigned char* data, size_t len){
     // l2cap_send doesn't return the bytes sent
     rc = l2cap_send(io->conn->handle, io->coc_idx, data, compatible_len);
 
-    if(rc != 0 || rc != BLE_HS_ESTALLED){
-        return -1;
+    // Sending was successful. Return the bytes that were sent
+    if(rc == 0 || rc == BLE_HS_ESTALLED){
+        return compatible_len;
     }
 
-    // Return the bytes that were sent
-    return compatible_len;
+    // Sending failed
+    return -1;
 }
 
 int recv_data(void* ctx, unsigned char* data, size_t len, uint32_t timeout_msec){
-    int rc;
+    int res;
+    uint16_t len_read;
     io_ctx* io = ctx;
-    
-    // TODO MBEDTLS:
+    struct os_mbuf* sdu;
+    struct l2cap_coc_node* coc;
 
-    return 0;
+    coc = l2cap_coc_find_by_idx(io->conn, io->coc_idx);
+    assert(coc != NULL);
+
+    // Check if timeout means forever.
+    if(timeout_msec == 0){
+        printf("Set receive timeout to infinite ...\n"); // TODO DEBUG remove
+        timeout_msec = portMAX_DELAY;
+    }else{
+        timeout_msec = timeout_msec / portTICK_PERIOD_MS;
+    }
+
+    // Send the peer a signal to send data
+    sdu = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_rx, 0);
+    assert(sdu != NULL);
+    if(ble_l2cap_recv_ready(io->conn->coc_list.slh_first->chan, sdu) != 0){
+        assert(0);
+    }
+
+    // Await the incoming data
+    res = xSemaphoreTake(coc->received_data_semaphore, timeout_msec);
+    if(res != pdTRUE){
+        // Semaphore wasn't obtained
+        return MBEDTLS_ERR_SSL_TIMEOUT;
+    }
+
+    // 
+
+    // sdu = sdu_queue_get(&sdu_queue_rx);
+    // if(sdu == NULL){
+    //     // There is no element in the buffer, therefore is no sdu in sdu_os_mbuf_pool_rx
+    //     return MBEDTLS_ERR_SSL_WANT_READ;
+    // }
+
+    if(len >= sdu->om_len){
+        len_read = sdu->om_len;
+        for(int i = 0; i < len_read; i++){
+            data[i] = sdu->om_data[i];
+        }
+        // Remove sdu from sdu_os_mbuf_pool_rx
+        os_mbuf_free_chain(sdu);
+    }else{
+        // TODO this shouldn't be a case, test it
+        assert(0);
+    }
+
+    return len_read;
 }
 
 int read_subscription_part(ssl_ctx* ctx, unsigned char* buf, size_t max_len, size_t* out_len)
@@ -521,7 +573,7 @@ void test_sending_1(io_ctx* io){
     free(message);
 }
 
-void test_sending_2(io_ctx* io){
+void test_sending_2(io_ctx* io, int iterator){
     char* message = (char*)malloc(11 * sizeof(char));
     strcpy(message, "Message ");
     char* counter = (char*)malloc(12 * sizeof(char));
@@ -529,10 +581,11 @@ void test_sending_2(io_ctx* io){
     struct timeval start_time;
     struct timeval stop_time;
     gettimeofday(&start_time, NULL);
-    for(int i = 0; i < 100; i++){
+    for(int i = 0; i < iterator; i++){
         sprintf(counter, "%d", i);
         strncat(message, counter, 3);
-        l2cap_send_test(io->conn->handle, io->coc_idx, (const unsigned char*) message, 11, i);
+        printf("%d\n", i);
+        l2cap_send(io->conn->handle, io->coc_idx, (const unsigned char*) message, 11);
         strcpy(message, "Message ");
     }
     gettimeofday(&stop_time, NULL);
@@ -552,7 +605,89 @@ void test_sending_2(io_ctx* io){
     free(message);
 }
 
+void test_sending_3(io_ctx* io, int iterations){
+    // Get data from file
+    int len = L2CAP_COC_MTU;
+    char* message = (char*)malloc(len * sizeof(char));
+    if(message == NULL){
+        printf("Failed to alloc memory\n");
+        free(message);
+        return;
+    }
+    FILE* f = fopen("/spiffs/crypto/bike_srv.crt", "r");
+    if(f == NULL){
+        printf("Can't open file\n");
+        return;
+    }
+    fread(message, len, sizeof(char), f);
+    fclose(f);
 
+    // Start stopwatch
+    struct timeval start_time;
+    struct timeval stop_time;
+    gettimeofday(&start_time, NULL);
+
+    // Repeat sending data
+    for(int i = 0; i < iterations; i++){
+        printf("%d\n", i);
+        l2cap_send(io->conn->handle, io->coc_idx, (const unsigned char*) message, len);
+    }
+
+    // Get time
+    gettimeofday(&stop_time, NULL);
+    int long sec_diff = stop_time.tv_sec - start_time.tv_sec;
+    int long usec_diff;
+    if(stop_time.tv_usec >= start_time.tv_usec){
+        usec_diff = stop_time.tv_usec - start_time.tv_usec;
+    }
+    else{
+        usec_diff = 1000000 - start_time.tv_usec + stop_time.tv_usec;
+    }
+    printf("Time needed to send flood: %ld,%ld seconds\n", sec_diff, usec_diff);
+
+    free(message);
+}
+
+void test_mbedtls_1(io_ctx* io, ssl_ctx* ssl){
+    // Accept clients.
+	for (;;)
+	{
+        // TODO: solve this better
+        // Await L2CAP connection
+        while(l2cap_conns[0].coc_list.slh_first == NULL ){
+            usleep(50000);
+        }
+        io->conn = &l2cap_conns[0];
+        io->coc_idx = 0;
+
+		// Try to perform a successful SSL handshake.
+		int err = ssl_ctx_perform_handshake(ssl);
+
+		if (err != 0)
+		{
+			printf("Failed to perform SSL handshake: %s\n", ssl_ctx_error_msg(err));
+            assert(0);
+
+			// continue;
+		}
+
+		// // Receive and verify the signed subscription.
+		// if (!verify_subscription(&ctx))
+		// {
+		// 	ssl_ctx_close_connection(&ctx);
+		// 	close(new_sock);
+
+		// 	continue;
+		// }
+
+		// Close the connection.
+		ssl_ctx_close_connection(ssl);
+
+        printf("\n\nSSL HANDSHAKE SUCCESS\n\n");
+
+		break;
+	}
+}
 
 void app_main(void){
     int ret;
@@ -612,11 +747,21 @@ void app_main(void){
     ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());
     nimble_port_init();
 
-    // Initialize L2CAP memory pools
-    ret = os_mempool_init(&sdu_coc_mbuf_mempool, L2CAP_COC_BUF_COUNT, L2CAP_COC_MTU, l2cap_sdu_coc_mem, "l2cap_coc_sdu_pool");
+    // Initialize L2CAP RX memory pool
+    ret = os_mempool_init(&sdu_coc_mbuf_mempool_rx, L2CAP_COC_BUF_COUNT_RX, L2CAP_COC_MEM_BLOCK_SIZE, l2cap_sdu_coc_mem_rx, "l2cap_coc_sdu_rx_pool");
     assert(ret == 0);
-    ret = os_mbuf_pool_init(&sdu_os_mbuf_pool, &sdu_coc_mbuf_mempool, L2CAP_COC_MTU, L2CAP_COC_BUF_COUNT);
+    ret = os_mbuf_pool_init(&sdu_os_mbuf_pool_rx, &sdu_coc_mbuf_mempool_rx, L2CAP_COC_MEM_BLOCK_SIZE, L2CAP_COC_BUF_COUNT_RX);
     assert(ret == 0);
+    // Initialize RX SDU queue to track the order of the SDUs/mbufs in the sdu_os_mbuf_pool_rx. Length = L2CAP_COC_BUF_COUNT_RX - 1, because one RX-Buffer must always be available to ble_l2cap_recv_ready() and can't be tracked.
+    sdu_queue_init(&sdu_queue_rx, L2CAP_COC_BUF_COUNT_RX - 1);
+
+    // Initialize L2CAP TX memory pool
+    ret = os_mempool_init(&sdu_coc_mbuf_mempool_tx, L2CAP_COC_BUF_COUNT_TX, L2CAP_COC_MEM_BLOCK_SIZE, l2cap_sdu_coc_mem_tx, "l2cap_coc_sdu_tx_pool");
+    assert(ret == 0);
+    ret = os_mbuf_pool_init(&sdu_os_mbuf_pool_tx, &sdu_coc_mbuf_mempool_tx, L2CAP_COC_MEM_BLOCK_SIZE, L2CAP_COC_BUF_COUNT_TX);
+    assert(ret == 0);
+    
+    // Initialize L2CAP connection memory pool
     ret = os_mempool_init(&l2cap_coc_conn_pool, MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM), sizeof (struct l2cap_coc_node), l2cap_coc_conn_mem, "l2cap_coc_conn_pool");
     assert(ret == 0);
 
@@ -628,7 +773,7 @@ void app_main(void){
     // Let BLE host run in a new created task. To run the BLE host in the current task, read the comment of esp_nimble_hci_and_controller_init().
     nimble_port_freertos_init(host_task_func);
 
-    printf("mempool free  blocks: %d\n", sdu_coc_mbuf_mempool.mp_num_free);
+    printf("mempool free blocks: rx = %d, tx = %d\n", sdu_coc_mbuf_mempool_rx.mp_num_free, sdu_coc_mbuf_mempool_tx.mp_num_free);
     sleep(1);
 
     // Create L2CAP server
@@ -638,7 +783,7 @@ void app_main(void){
     // Create SSL context
     io_ctx io;
     ssl_ctx ctx;
-	ssl_ctx_create(&ctx, "/spiffs/crypto/bike_srv.key", "/spiffs/crypto/bike_srv.crt", "/spiffs/crypto/ca.crt", "fb_steigtum_app_clt", send_data, recv_data, &io);
+	ssl_ctx_create(&ctx, MBEDTLS_SSL_IS_SERVER, "/spiffs/crypto/bike_srv.key", "/spiffs/crypto/bike_srv.crt", "/spiffs/crypto/ca.crt", "fb_steigtum_app_clt", send_data, recv_data, &io);
 
     // Set up advertising
     ble_svc_gap_init();
@@ -657,37 +802,43 @@ void app_main(void){
     ret = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &adv_params, on_gap_event, NULL);
     assert(ret == 0);
 
-    // TODO: solve this better
-    // Await L2CAP connection
-    while(l2cap_conns[0].coc_list.slh_first == NULL ){
-        usleep(50000);
-    }
-    io.conn = &l2cap_conns[0];
-    io.coc_idx = 0;
+    test_mbedtls_1(&io, &ctx);
 
-    /*** Test sending ***/
+    // /*** Test sending ***/
 
-    // Check heap
-    int32_t heap_diff;
-    size_t heap_curr;
-    size_t heap_start = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-    ESP_LOGI(HEAP_TAG, "Heap before memory allocation and sending:\t%zu", heap_start);
-    sleep(1);
+    // // Loop connecting, sending, disconnecting:
+    // while(1){
+    //     // TODO: solve this better
+    //     // Await L2CAP connection
+    //     while(l2cap_conns[0].coc_list.slh_first == NULL ){
+    //         usleep(50000);
+    //     }
+    //     io.conn = &l2cap_conns[0];
+    //     io.coc_idx = 0;
 
-    printf("mempool free  blocks: %d\n", sdu_coc_mbuf_mempool.mp_num_free);
-    sleep(1);
-    test_sending_1(&io);
-    printf("mempool free  blocks: %d\n", sdu_coc_mbuf_mempool.mp_num_free);
-    sleep(3);
+    //     // Check heap
+    //     heap_start = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    //     ESP_LOGI(HEAP_TAG, "Heap before memory allocation and sending:\t%zu", heap_start);
+    //     sleep(1);
 
-    test_sending_2(&io);
-    sleep(1);
+    //     // test_sending_1(&io);
+    //     // sleep(3);
+    //     test_sending_2(&io, 5);
+    //     sleep(1);
+    //     // test_sending_3(&io, 4);
+    //     // sleep(1);
 
-    // Check heap
-    heap_curr = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-    ESP_LOGI(HEAP_TAG, "Heap curr:\t%zu", heap_curr);
-    heap_diff = heap_curr - heap_start;
-    ESP_LOGI(HEAP_TAG, "Heap diff:\t%d", heap_diff);
+    //     printf("mempool free blocks: rx = %d, tx = %d\n", sdu_coc_mbuf_mempool_rx.mp_num_free, sdu_coc_mbuf_mempool_tx.mp_num_free);
+
+    //     // Check heap
+    //     heap_curr = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    //     ESP_LOGI(HEAP_TAG, "Heap curr:\t%zu", heap_curr);
+    //     heap_diff = heap_curr - heap_start;
+    //     ESP_LOGI(HEAP_TAG, "Heap diff:\t%d", heap_diff);
+        
+    //     l2cap_disconnect(io.conn->handle, io.coc_idx);
+    //     sleep(15);
+    // }
 
     return;
 }

@@ -25,6 +25,7 @@ static void fail_on_error(int err, const char* tag)
 
 void ssl_ctx_create(
 	ssl_ctx* ctx,
+	int communication_role,
 	const char* srv_key_file,
 	const char* srv_crt_file,
 	const char* ca_crt_file,
@@ -47,7 +48,7 @@ void ssl_ctx_create(
 
 	err = mbedtls_ssl_config_defaults(
 		&ctx->config,
-		MBEDTLS_SSL_IS_SERVER,
+		communication_role,
 		MBEDTLS_SSL_TRANSPORT_STREAM,
 		MBEDTLS_SSL_PRESET_DEFAULT
 	);
