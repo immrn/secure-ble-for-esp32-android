@@ -43,11 +43,11 @@ typedef struct __ssl_ctx__
 /* 
  *	@brief Create a new SSL context with the given parameters.
  *
- * 	@param communication_role		use MBEDTLS_SSL_IS_SERVER or MBEDTLS_SSL_IS_CLIENT
+ * 	@param endpoint_role		use MBEDTLS_SSL_IS_SERVER or MBEDTLS_SSL_IS_CLIENT
  */
 void ssl_ctx_create(
 	ssl_ctx* ctx,
-	int communication_role,
+	int endpoint_role,
 	const char* srv_key_file,
 	const char* srv_crt_file,
 	const char* ca_crt_file,

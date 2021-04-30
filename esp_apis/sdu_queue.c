@@ -8,6 +8,7 @@ uint8_t sdu_queue_init(sdu_queue* queue, uint8_t length){
     }
     queue->length = length;
     queue->free_nodes = length;
+    queue->front_offset = 0;
     // Set the referecens to NULL
     for(int i = 0; i < queue->length; i++){
         queue->storage_area[i] = NULL;
@@ -30,9 +31,19 @@ uint8_t sdu_queue_add(sdu_queue* queue, struct os_mbuf* sdu){
 struct os_mbuf* sdu_queue_get(sdu_queue* queue){
     // Get the front element of the queue
     struct os_mbuf* front = queue->storage_area[0];
+    return front;
+}
+
+uint8_t sdu_queue_remove(sdu_queue* queue){
+    // Get the front element of the queue
+    struct os_mbuf* front = queue->storage_area[0];
+
+    if(front == NULL){
+        return SDU_QUEUE_EQUEUEEMPTY;
+    }
 
     for(int i = 0; i < queue->length; i++){
-        // Check if the loop reached the end of queue
+        // Check if the loop reached the end of the queue
         if(i == queue->length-1){
             queue->storage_area[i] = NULL;
             break;
@@ -48,22 +59,37 @@ struct os_mbuf* sdu_queue_get(sdu_queue* queue){
         }
     }
 
-    if(front != NULL){
-        queue->free_nodes++;
+    queue->front_offset = 0;
+    queue->free_nodes++;
+    return 0;
+}
+
+uint8_t sdu_queue_increase_offset(sdu_queue* queue, sdu_queue_offset_t value){
+    if(queue->storage_area[0] == NULL){
+        return SDU_QUEUE_EQUEUEEMPTY;
     }
 
-    return front;
+    queue->front_offset += value;
+    return 0;
 }
 
 void sdu_queue_print(sdu_queue* queue){
-    printf("Start printing SDU queue:\n");
+    printf("SDU queue, len = %d, offset = %d:\n", queue->length, queue->front_offset);
 
     for(int i = 0; i < queue->length; i++){
-        printf("Element %d:\n", i);
+        printf("Element %d:\t", i);
         if(queue->storage_area[i] != NULL){
-            print_mbuf_as_string(queue->storage_area[i]);
+            printf("len = %d\n", queue->storage_area[i]->om_len);
+        }
+        else{
+            printf("\n");
         }
     }
 
-    printf("Finished printing SDU queue!\n");
+    // for(int i = 0; i < queue->length; i++){
+    //     printf("Element %d:\n", i);
+    //     if(queue->storage_area[i] != NULL){
+    //         print_mbuf_as_string(queue->storage_area[i]);
+    //     }
+    // }
 }

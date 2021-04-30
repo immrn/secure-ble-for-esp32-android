@@ -81,17 +81,28 @@ You have to generate the certificates for the client and server application:
 
 ### Android App:
 
-## 4. How It Works
-### GAP and L2CAP (NimBLE)
+## 4. Application Details
+
+### TLS (mbedtls) over L2CAP
+
+#### Buffer Management
+**Reading Bytes:** Whenever a TLS endpoint wants to read bytes, it checks the rx buffer. If the rx buffer contains the requested amount of bytes (or less), TODO BEFORE COMMIT
+
+### Connection Establishment
 | Server | Client |
 | --- | --- |
 | Start advertising (GAP) | Start discovering (GAP) |
 | | --> Discovered server |
 | | <-- Connecting (GAP) to server |
 | Connected to client (GAP) | Connected to server (GAP) |
+| | |
 | | <-- Connect to server (L2CAP) |
 | Accepting connection (L2CAP) <-- | |
 | Connected to client (L2CAP) | Connected to server (L2CAP) |
+| | |
+| TLS-Handshake | TLS-Handshake |
+
+When TLS wants to receive bytes it sends the *receive_ready* command of L2CAP and will wait until it received bytes. The other endpoint can only send L2CAP Packets if it received the *receive_ready* command.
 
 ### ESP
 #### Tasks / Threading
@@ -101,8 +112,13 @@ Because this ESP32 contains a dual core processor FreeRTOS-Tasks are either pinn
 	- the app itself
 - APP_CPU (1) Tasks:
 
-
-<!-- TODO Explain TLS over BLE ... -->
+### Configuration
+- **mbedtls debugging**
+	- in `esp_apis/ssl_ctx.h` set line 5 to `#define SSL_CTX_DEBUG` <!-- TODO Maybe adjust location -->
+	- run `idf.py menuconfig` -> _Component config_ -> _mbedTLS_ -> _Enable mbedTLS debugging_ set true
+	- run `idf.py menuconfig` -> _Component config_ -> _ESP System Settings_ -> _Main task stack size_ and set the value to something bigger to prevent a stack overflow in task main (5000 works definitely, standard value was 3584)
+		- _ESP System Settings_ -> Baudrate to 230400
+		- flasher -> baudrate to 230400
 
 ## 5. Links and Examples to Get Started
 ### ESP-IDF

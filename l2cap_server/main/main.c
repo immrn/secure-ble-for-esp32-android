@@ -20,12 +20,14 @@
 #include "app_misc.h"
 #include "app_l2cap.h"
 #include "ssl_ctx.h"
+#include "app_config.h"
 
 // TODO DEBUG remove
 #include <sys/time.h>
+#define MBEDTLS_TAG "MBEDTLS"
 
 
-#define CONFIG_BT_NIMBLE_DEBUG
+#define CONFIG_BT_NIMBLE_DEBUG // TODO ?
 
 #define SPIFFS_TAG "SPIFFS"
 #define HEAP_TAG "HEAP"
@@ -322,6 +324,7 @@ int send_data(void* ctx, const unsigned char* data, size_t len){
     int rc;
     uint16_t compatible_len;
     io_ctx* io = ctx;
+    static int count = 0; // TODO BEFORE COMMIT remove
 
     // l2cap_send would fail if len > L2CAP_COC_MTU
     if(len > L2CAP_COC_MTU){
@@ -330,6 +333,13 @@ int send_data(void* ctx, const unsigned char* data, size_t len){
         compatible_len = (uint16_t)len;
     }
 
+    // TODO BEFORE COMMIT remove
+    if(count++ >= 6){
+        printf("WAITING...\n");
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+    }
+
+    ESP_LOGI(MBEDTLS_TAG, "Sending bytes..."); // TODO DEBUG remove
     // l2cap_send doesn't return the bytes sent
     rc = l2cap_send(io->conn->handle, io->coc_idx, data, compatible_len);
 
@@ -344,57 +354,62 @@ int send_data(void* ctx, const unsigned char* data, size_t len){
 
 int recv_data(void* ctx, unsigned char* data, size_t len, uint32_t timeout_msec){
     int res;
-    uint16_t len_read;
     io_ctx* io = ctx;
     struct os_mbuf* sdu;
     struct l2cap_coc_node* coc;
 
-    coc = l2cap_coc_find_by_idx(io->conn, io->coc_idx);
-    assert(coc != NULL);
+    // TODO DEBUG remove
+    ESP_LOGI(MBEDTLS_TAG, "Want to read/receive %u bytes", len);
+    sdu_queue_print(&sdu_queue_rx);
 
-    // Check if timeout means forever.
-    if(timeout_msec == 0){
-        printf("Set receive timeout to infinite ...\n"); // TODO DEBUG remove
-        timeout_msec = portMAX_DELAY;
+    // Check if the RX Buffer (sdu_os_mbuf_pool_rx) contains unread data.
+    sdu = sdu_queue_get(&sdu_queue_rx);
+    if(sdu != NULL){
+        // sdu_queue_rx is not empty -> RX Buffer contains unread data.
+
+        ESP_LOGI(MBEDTLS_TAG, "Reading from buffer..."); // TODO DEBUG remove
+        // Read the RX Buffer and free resources of the buffer if possible.
+        res = l2cap_read_rx_buffer(data, len, &sdu_queue_rx);
+        ESP_LOGI(MBEDTLS_TAG, " Finished.\n"); // TODO DEBUG remove
+        sdu_queue_print(&sdu_queue_rx);
+        return res;
     }else{
-        timeout_msec = timeout_msec / portTICK_PERIOD_MS;
-    }
+        // sdu_queue_rx is empty -> sdu_os_mbuf_pool_rx is empty -> we have to receive data from the peer
 
-    // Send the peer a signal to send data
-    sdu = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_rx, 0);
-    assert(sdu != NULL);
-    if(ble_l2cap_recv_ready(io->conn->coc_list.slh_first->chan, sdu) != 0){
-        assert(0);
-    }
+        // Get the current COC.
+        coc = l2cap_coc_find_by_idx(io->conn, io->coc_idx);
+        assert(coc != NULL);
 
-    // Await the incoming data
-    res = xSemaphoreTake(coc->received_data_semaphore, timeout_msec);
-    if(res != pdTRUE){
-        // Semaphore wasn't obtained
-        return MBEDTLS_ERR_SSL_TIMEOUT;
-    }
-
-    // 
-
-    // sdu = sdu_queue_get(&sdu_queue_rx);
-    // if(sdu == NULL){
-    //     // There is no element in the buffer, therefore is no sdu in sdu_os_mbuf_pool_rx
-    //     return MBEDTLS_ERR_SSL_WANT_READ;
-    // }
-
-    if(len >= sdu->om_len){
-        len_read = sdu->om_len;
-        for(int i = 0; i < len_read; i++){
-            data[i] = sdu->om_data[i];
+        // Make the timeout value compatible for the upcoming semaphore
+        if(timeout_msec == 0){
+            printf("Set receive timeout to infinite ...\n"); // TODO DEBUG remove
+            timeout_msec = portMAX_DELAY;
+        }else{
+            timeout_msec = timeout_msec / portTICK_PERIOD_MS;
         }
-        // Remove sdu from sdu_os_mbuf_pool_rx
-        os_mbuf_free_chain(sdu);
-    }else{
-        // TODO this shouldn't be a case, test it
-        assert(0);
-    }
 
-    return len_read;
+        // Send the peer the command to send data
+        sdu = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_rx, 0);
+        assert(sdu != NULL);
+        ESP_LOGI(MBEDTLS_TAG, "Sending RECEIVE READY"); // TODO DEBUG remove
+        res = ble_l2cap_recv_ready(coc->chan, sdu);
+        assert(res == 0);
+
+        // Await the incoming data
+        res = xSemaphoreTake(coc->received_data_semaphore, portMAX_DELAY /*TODO BEFORE COMMIT set to timeout_msec*/);
+        if(res != pdTRUE){
+            // Semaphore wasn't obtained
+            return MBEDTLS_ERR_SSL_TIMEOUT;
+        }
+
+        ESP_LOGI(MBEDTLS_TAG, "Reading from buffer..."); // TODO DEBUG remove
+        // Received the semaphore. The SDU was added to sdu_os_mbuf_pool_rx
+        // and as reference to sdu_queue_rx by l2cap_coc_recv().
+        res = l2cap_read_rx_buffer(data, len, &sdu_queue_rx);
+        ESP_LOGI(MBEDTLS_TAG, " Finished.\n"); // TODO DEBUG remove
+        sdu_queue_print(&sdu_queue_rx);
+        return res;
+    }
 }
 
 int read_subscription_part(ssl_ctx* ctx, unsigned char* buf, size_t max_len, size_t* out_len)
@@ -648,7 +663,7 @@ void test_sending_3(io_ctx* io, int iterations){
     free(message);
 }
 
-void test_mbedtls_1(io_ctx* io, ssl_ctx* ssl){
+void test_mbedtls_1(io_ctx* io, ssl_ctx* ssl_context){
     // Accept clients.
 	for (;;)
 	{
@@ -660,8 +675,10 @@ void test_mbedtls_1(io_ctx* io, ssl_ctx* ssl){
         io->conn = &l2cap_conns[0];
         io->coc_idx = 0;
 
+        ESP_LOGI(MBEDTLS_TAG, "Starting TLS Handshake...");
+
 		// Try to perform a successful SSL handshake.
-		int err = ssl_ctx_perform_handshake(ssl);
+		int err = ssl_ctx_perform_handshake(ssl_context);
 
 		if (err != 0)
 		{
@@ -681,7 +698,7 @@ void test_mbedtls_1(io_ctx* io, ssl_ctx* ssl){
 		// }
 
 		// Close the connection.
-		ssl_ctx_close_connection(ssl);
+		ssl_ctx_close_connection(ssl_context);
 
         printf("\n\nSSL HANDSHAKE SUCCESS\n\n");
 

@@ -5,13 +5,11 @@
 #include "../src/ble_hs_priv.h"
 #include "host/ble_l2cap.h"
 
+#include "app_config.h"
 #include "sdu_queue.h"
 #include "app_misc.h"
 
 
-#define APP_CID 0xffff
-
-#define L2CAP_COC_MTU 512
 
 #define L2CAP_COC_BUF_COUNT_RX (6 * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM))
 #define L2CAP_COC_BUF_COUNT_TX (2 * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM))
@@ -88,10 +86,22 @@ int l2cap_reconfig(uint16_t conn_handle, uint16_t mtu, uint8_t num, uint8_t idxs
 
 int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data, uint16_t len);
 
+/*** Read Buffer (mbuf pool) ***/
 
+/*
+ *  @brief          Reads data of the SDUs of a os_mbuf_pool. Access to the SDUs is acquired through the sdu_queue.
+ *
+ *  @param data     Buffer to write the received data to.
+ *  @param len      Length of the data to read.
+ *  @param queue    Initialized queue.
+ * 
+ *  @return         Returns number of bytes read.
+ */
+size_t l2cap_read_rx_buffer(unsigned char* data, size_t len, sdu_queue* queue);
+
+/*** General ***/
 
 int on_l2cap_event(struct ble_l2cap_event *event, void *arg);
 
-
-
+// TODO REMOVE
 int l2cap_send_old_from_btshell(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data, uint16_t len);

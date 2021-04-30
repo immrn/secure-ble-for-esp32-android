@@ -43,6 +43,7 @@ void l2cap_conn_delete_idx(int conn_idx){
 }
 
 /*** l2cap coc ***/
+
 struct l2cap_coc_node* l2cap_coc_find(struct l2cap_conn* conn, struct ble_l2cap_chan* chan){
     struct l2cap_coc_node* coc;
     struct l2cap_coc_node* cur;
@@ -126,15 +127,15 @@ void l2cap_coc_remove(uint16_t conn_handle, struct ble_l2cap_chan *chan){
 }
 
 void l2cap_coc_recv(uint16_t conn_handle, struct ble_l2cap_chan *chan, struct os_mbuf *sdu){
+    int res;
     struct l2cap_conn* conn;
     struct l2cap_coc_node *coc;
-    struct os_mbuf *sdu_new;
     static int sdu_count = 0; // TODO DEBUG remove
     
-    printf("LE CoC SDU received, #%d, chan: 0x%08x, data len %d\n", sdu_count, (uint32_t) chan, OS_MBUF_PKTLEN(sdu));
+    printf("LE CoC SDU received, #%d, chan: 0x%08x, data len %d\n", sdu_count++, (uint32_t) chan, OS_MBUF_PKTLEN(sdu));
 
-    // sdu_queue_add(&sdu_queue_rx, sdu);
-    // sdu_queue_print(&sdu_queue_rx);
+    res = sdu_queue_add(&sdu_queue_rx, sdu);
+    assert(res == 0);
 
     conn = l2cap_conn_find(conn_handle);
     assert(conn != NULL);
@@ -294,10 +295,11 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
     struct l2cap_coc_node *coc;
     struct l2cap_conn *conn;
     struct os_mbuf *sdu_tx;
+    static int packet_count = 0; // TODO DEBUG remove
 
     printf("mempool free blocks: rx = %d, tx = %d\n", sdu_coc_mbuf_mempool_rx.mp_num_free, sdu_coc_mbuf_mempool_tx.mp_num_free);
 
-    printf("Sending L2CAP packet: connection = %d, COC = %d, len = %d\n", conn_handle, coc_idx, len);
+    printf("Sending L2CAP packet #%d: connection = %d, COC = %d, len = %d\n", packet_count++, conn_handle, coc_idx, len);
 
     sdu_tx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_tx, 0);
     if (!sdu_tx) {
@@ -308,7 +310,7 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
     conn = l2cap_conn_find(conn_handle);
     assert(conn != NULL);
 
-    coc = l2cap_coc_find(conn, coc_idx);
+    coc = l2cap_coc_find_by_idx(conn, coc_idx);
     if(coc == NULL){
         printf("COC = %d doesn't exist!\n\n", coc_idx);
         return -1;
@@ -358,6 +360,79 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
     return res;
 }
 
+/*** Read Buffer (mbuf pool) ***/
+
+size_t l2cap_read_rx_buffer(unsigned char* data, size_t len, sdu_queue* queue){
+    int res;
+    struct os_mbuf* sdu = sdu_queue_get(queue);
+    
+    // Calculate the amount of unread bytes in the current SDU.
+    sdu_queue_offset_t unread_bytes_in_cur_sdu = sdu->om_len - queue->front_offset;
+
+    // Check if the amount of bytes we have to read reaches over multiple SDUs of sdu_os_mbuf_pool_rx.
+    if(len > unread_bytes_in_cur_sdu){
+        // We have to read multiple SDUs.
+        size_t bytes_read = 0;
+        while(len > bytes_read){
+            // Read all the unread bytes starting at the offset of the current SDU.
+            for(int i = 0; i < unread_bytes_in_cur_sdu; i++){
+                data[bytes_read + i] = sdu->om_data[queue->front_offset + i];
+            }
+            bytes_read += unread_bytes_in_cur_sdu;
+
+
+            // Did read all the unread bytes of the current SDU. Now remove the SDU and get the next SDU.
+            res = os_mbuf_free_chain(sdu);
+            assert(res == 0);
+            res = sdu_queue_remove(queue); // Sets queue.front_offset to 0 automatically.
+            assert(res == 0);
+            sdu = sdu_queue_get(queue);
+            if(sdu == NULL){
+                // queue is empty -> did read all the data from the SDUs in sdu_os_mbuf_pool_rx  -> report mbedTLS how many bytes we read so far
+                break;
+            }
+            
+            // Calculate if we have to read the complete next SDU.
+            if((len - bytes_read) >= sdu->om_len){
+                // We have to read the complete next SDU.
+                unread_bytes_in_cur_sdu = sdu->om_len;
+            }else{
+                // We have to read a part of the next SDU only.
+                unread_bytes_in_cur_sdu = len - bytes_read;
+                // Read all the unread bytes starting at the offset of the current SDU.
+                for(int i = 0; i < unread_bytes_in_cur_sdu; i++){
+                    data[bytes_read + i] = sdu->om_data[queue->front_offset + i];
+                }
+                bytes_read += unread_bytes_in_cur_sdu;
+                break;
+            }
+        }
+        return bytes_read;
+    }else{
+        // The amount of the unread bytes is placed in the front SDU only
+
+        // Read the data starting at the offset of the currenct SDU.
+        for(int i = 0; i < len; i++){
+            data[i] = sdu->om_data[queue->front_offset + i];
+        }
+
+        if(len < unread_bytes_in_cur_sdu){
+            // We didn't have to read all remaining bytes of the SDU.
+            // Add the amount of bytes we did read to the offset.
+            sdu_queue_increase_offset(queue, len);
+        }
+        else{
+            // We had to read all remaining bytes. Now remove the SDU.
+            res = os_mbuf_free_chain(sdu);
+            assert(res == 0);
+            res = sdu_queue_remove(queue); // Sets queue.front_offset to 0 automatically.
+            assert(res == 0);
+        }
+        return len;
+    }
+}
+
+// TODO REMOVE
 int l2cap_send_old_from_btshell(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data, uint16_t len){
     struct l2cap_conn *conn;
     struct l2cap_coc_node *coc;
