@@ -32,7 +32,8 @@ int send_data(void* ctx, const unsigned char* data, size_t len){
     }
 
     // Try to send. (l2cap_send blocks)
-    ESP_LOGI(MBEDTLS_TAG, "Want to send %d bytes! (task handle = %p)", compatible_len, xTaskGetCurrentTaskHandle());
+    ESP_LOGI(MBEDTLS_TAG, "Want to send %d bytes!", compatible_len);
+	ESP_LOGI(MBEDTLS_TAG, "core id = %d, task handle = %p", xPortGetCoreID(), xTaskGetCurrentTaskHandle());
 
 #if SEND_DELAY_MS
     // TODO DEBUG remove delay
@@ -64,15 +65,15 @@ int recv_data(void* ctx, unsigned char* data, size_t len, uint32_t timeout_msec)
 	ESP_LOGI(MBEDTLS_TAG, "core id = %d, task handle = %p", xPortGetCoreID(), xTaskGetCurrentTaskHandle());
     sdu_queue_print(&sdu_queue_rx);
 
+	// Get the current COC.
+	coc = l2cap_coc_find_by_idx(io->conn, io->coc_idx);
+	assert(coc != NULL);
+
     // Check if the RX Buffer (sdu_os_mbuf_pool_rx) is empty.
 	// Otherwise the RX Buffer contains unread data already and we skip the IF-Scope.
     sdu = sdu_queue_get(&sdu_queue_rx);
     if(sdu == NULL){
         // sdu_queue_rx is empty -> sdu_os_mbuf_pool_rx is empty -> we have to receive data from the peer
-
-        // Get the current COC.
-        coc = l2cap_coc_find_by_idx(io->conn, io->coc_idx);
-        assert(coc != NULL);
 
         // Make the timeout value compatible for the upcoming semaphore
         if(timeout_msec == 0){
@@ -82,22 +83,24 @@ int recv_data(void* ctx, unsigned char* data, size_t len, uint32_t timeout_msec)
             timeout_msec = timeout_msec / portTICK_PERIOD_MS;
         }
 
-        // Send the peer the command to send data
-        sdu = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_rx, 0);
-        assert(sdu != NULL);
+        // // Send the peer the command to send data
+        // sdu = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_rx, 0);
+        // assert(sdu != NULL);
 
-        ESP_LOGI(MBEDTLS_TAG, "RECEIVE READY!");
-        res = ble_l2cap_recv_ready(coc->chan, sdu);
-        assert(res == 0);
+        // ESP_LOGI(MBEDTLS_TAG, "RECEIVE READY!");
+        // res = ble_l2cap_recv_ready(coc->chan, sdu);
+        // assert(res == 0);
 
         // Await the incoming data
-        ESP_LOGI(MBEDTLS_TAG, "Try to take semaphore"); // TODO DEBUG remove
-        res = xSemaphoreTake(coc->received_data_semaphore, portMAX_DELAY /*TODO DEBUG set to timeout_msec*/);
-        ESP_LOGI(MBEDTLS_TAG, "Received semaphore"); // TODO DEBUG remove
+        ESP_LOGI(MBEDTLS_TAG, "Waiting for L2CAP to receive a SDU...");
+		xSemaphoreGive(coc->want_data_semaphore);
+        res = xSemaphoreTake(coc->received_data_semaphore, timeout_msec);
         if(res != pdTRUE){
             // Semaphore wasn't obtained
+			ESP_LOGI(MBEDTLS_TAG, "Timeout: Didn't receive a SDU.");
             return MBEDTLS_ERR_SSL_TIMEOUT;
         }
+		ESP_LOGI(MBEDTLS_TAG, "Received a SDU.");
 
         // Received the semaphore. The SDU was added to sdu_os_mbuf_pool_rx
         // and as reference to sdu_queue_rx by l2cap_coc_recv().
@@ -105,10 +108,11 @@ int recv_data(void* ctx, unsigned char* data, size_t len, uint32_t timeout_msec)
 
     // Read the RX Buffer and free resources of the buffer if possible.
 	ESP_LOGI(MBEDTLS_TAG, "Reading from buffer...");
-	res = l2cap_read_rx_buffer(data, len, &sdu_queue_rx);
+	res = l2cap_read_rx_buffer(&sdu_queue_rx, coc, data, len);
 
-	ESP_LOGI(MBEDTLS_TAG, "Did read %d bytes from buffer.\n", res);
+	ESP_LOGI(MBEDTLS_TAG, "Did read %d bytes from buffer.", res);
 	sdu_queue_print(&sdu_queue_rx);
+	printf("\n");
 
 	// Return the bytes read
 	return res;
@@ -276,6 +280,14 @@ void test_mbedtls_1(io_ctx* io, ssl_ctx* ssl_context){
 		ssl_ctx_close_connection(ssl_context);
 
         ESP_LOGI(MBEDTLS_TAG, "----- TLS Handshake successful -----\n");
+
+		// TODO DEBUG remove
+		vTaskDelay(3000 / portTICK_PERIOD_MS);
+		sdu_queue_print(&sdu_queue_rx);
+		struct os_mbuf* sdu = sdu_queue_get(&sdu_queue_rx);
+		printf("Content of Element 0:\n");
+		print_mbuf(sdu);
+		printf("End of Content!\n");
 
 		break;
 	}

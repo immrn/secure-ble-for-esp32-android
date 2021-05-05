@@ -86,7 +86,7 @@ You have to generate the certificates for the client and server application:
 ### TLS (mbedtls) over L2CAP
 
 #### Buffer Management
-**Reading Bytes:** Whenever a TLS endpoint wants to read bytes, it checks the rx buffer. If the rx buffer contains the requested amount of bytes (or less), TODO BEFORE COMMIT
+**Reading Bytes:** TODO
 
 ### Connection Establishment
 | Server | Client |
@@ -113,12 +113,17 @@ Because this ESP32 contains a dual core processor FreeRTOS-Tasks are either pinn
 - APP_CPU (1) Tasks:
 
 ### Configuration
+#### ESP
+It's already configured if you are using the projects `l2cap_server` or `l2cap_client`.
 - **mbedtls debugging**
 	- in `esp_apis/ssl_ctx.h` set line 5 to `#define SSL_CTX_DEBUG` <!-- TODO Maybe adjust location -->
-	- run `idf.py menuconfig` -> _Component config_ -> _mbedTLS_ -> _Enable mbedTLS debugging_ set true
-	- run `idf.py menuconfig` -> _Component config_ -> _ESP System Settings_ -> _Main task stack size_ and set the value to something bigger to prevent a stack overflow in task main (5000 works definitely, standard value was 3584)
-		- _ESP System Settings_ -> Baudrate to 230400
-		- flasher -> baudrate to 230400
+	- run `idf.py menuconfig`
+		- _Component config_ ->
+			- _mbedTLS_ -> _Enable mbedTLS debugging_ -> set true = (*)
+			- _ESP System Settings_ -> _Main task stack size_ -> 6000 works definitely, standard value was 3584 (increase if running into a stack overflow in task main)
+			- _ESP System Settings_ -> _Channel for console output_ -> _Custom UART_
+			- _ESP System Settings_ -> _UART console baud rate_ -> 230400
+		- _Serial flasher config_ -> _`idf.py monitor` baud rate_ -> 230400
 
 ## 5. Links and Examples to Get Started
 ### ESP-IDF

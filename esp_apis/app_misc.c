@@ -10,18 +10,15 @@ void print_addr(const void *addr){
 
 void print_bytes(const uint8_t *bytes, int len){
     for(int i = 0; i < len; i++){
-        printf("%s0x%02x", i != 0 ? ":" : "", bytes[i]);
+        printf("%02x ", bytes[i]);
+        // if(i+1%6 == 0){
+        //     printf("\n");
+        // }
     }
 }
 
 void print_mbuf(const struct os_mbuf *om){
-    int colon = 0;
     while(om != NULL){
-        if(colon){
-            printf(":");
-        }else{
-            colon = 1;
-        }
         print_bytes(om->om_data, om->om_len);
         om = SLIST_NEXT(om, om_next);
     }

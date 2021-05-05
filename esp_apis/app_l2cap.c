@@ -1,5 +1,10 @@
 #include "app_l2cap.h"
 
+#include "esp_log.h"
+#include "esp_err.h" // TODO exchange all printf to ESP_LOGI or ESP_LOGE
+
+#include "app_tags.h"
+
 int l2cap_conn_find_idx(uint16_t handle){
     for(int i = 0; i < l2cap_conns_num; i++){
         if(l2cap_conns[i].handle == handle){
@@ -89,10 +94,14 @@ int l2cap_coc_add(uint16_t conn_handle, struct ble_l2cap_chan *chan){
     // Initialize COC node
     coc->chan = chan;
     coc->unstalled_semaphore = xSemaphoreCreateBinary();
+    coc->want_data_semaphore = xSemaphoreCreateBinary();
     coc->received_data_semaphore = xSemaphoreCreateBinary();
+    coc->sdu_queue_removed_element_semaphore = xSemaphoreCreateBinary();
     // NULL if allocation was unsuccessful
     assert(coc->unstalled_semaphore != NULL);
+    assert(coc->want_data_semaphore != NULL);
     assert(coc->received_data_semaphore != NULL);
+    assert(coc->sdu_queue_removed_element_semaphore != NULL);
 
     prev = NULL;
     SLIST_FOREACH(cur, &conn->coc_list, next){
@@ -120,7 +129,9 @@ void l2cap_coc_remove(uint16_t conn_handle, struct ble_l2cap_chan *chan){
 
     // Free the memory of the semaphores
     vSemaphoreDelete(coc->unstalled_semaphore);
+    vSemaphoreDelete(coc->want_data_semaphore);
     vSemaphoreDelete(coc->received_data_semaphore);
+    vSemaphoreDelete(coc->sdu_queue_removed_element_semaphore);
 
     SLIST_REMOVE(&conn->coc_list, coc, l2cap_coc_node, next);
     os_memblock_put(&l2cap_coc_conn_pool, coc);
@@ -130,12 +141,10 @@ void l2cap_coc_recv(uint16_t conn_handle, struct ble_l2cap_chan *chan, struct os
     int res;
     struct l2cap_conn* conn;
     struct l2cap_coc_node *coc;
-    static int sdu_count = 0;
+    uint8_t queue_was_empty = 0;
+    static unsigned int sdu_count = 0;
 
-    printf("LE CoC SDU received, #%d, chan: 0x%08x, data len %d\n", sdu_count++, (uint32_t) chan, OS_MBUF_PKTLEN(sdu));
-
-    res = sdu_queue_add(&sdu_queue_rx, sdu);
-    assert(res == 0);
+    ESP_LOGI(L2CAP_TAG, "Received SDU #%d, chan: 0x%08x, data len %u", sdu_count++, (uint32_t) chan, OS_MBUF_PKTLEN(sdu));
 
     conn = l2cap_conn_find(conn_handle);
     assert(conn != NULL);
@@ -143,17 +152,43 @@ void l2cap_coc_recv(uint16_t conn_handle, struct ble_l2cap_chan *chan, struct os
     coc = l2cap_coc_find(conn, chan);
     assert(coc != NULL);
 
-    // Signal the COC the arrival of data
-    xSemaphoreGive(coc->received_data_semaphore);
+    if(sdu_queue_get(&sdu_queue_rx) == NULL){
+        ESP_LOGI(MBEDTLS_TAG, "Check if the recv_data() callback is looking for fresh data."); // TODO DEBUG remove
+        int semaphore_res = xSemaphoreTake(coc->want_data_semaphore, 0);
 
-    // os_mbuf_free_chain(sdu);
+        res = sdu_queue_add(&sdu_queue_rx, sdu);
+        assert(res == 0);
 
-    // sdu = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_rx, 0);
-    // assert(sdu != NULL);
+        if(semaphore_res == pdTRUE){
+            ESP_LOGI(MBEDTLS_TAG, "It was looking for fresh data."); // TODO DEBUG remove
+            // Signal the COC the arrival of data, because it asked for it in recv_data() from app_ssl.c!
+            xSemaphoreGive(coc->received_data_semaphore);
+        }else{
+            ESP_LOGI(MBEDTLS_TAG, "It wasn't looking for fresh data."); // TODO DEBUG remove
+        }
+    }else{
+        res = sdu_queue_add(&sdu_queue_rx, sdu);
+        if(res == SDU_QUEUE_EQUEUEFULL){
+            ESP_LOGI(L2CAP_TAG, "RX buffer is full. Wait for it to free a block...");
+            // Wait for a queue element to become available.
+            res = xSemaphoreTake(coc->sdu_queue_removed_element_semaphore, portMAX_DELAY);
+            if(res == pdTRUE){
+                ESP_LOGI(L2CAP_TAG, "RX buffer freed a block.");
+                sdu_queue_add(&sdu_queue_rx, sdu);
+            }else{
+                ESP_LOGE(L2CAP_TAG, "Timeout: RX buffer didn't free a block in time.");
+                assert(0);
+            }
+        }
+    }
 
-    // if(ble_l2cap_recv_ready(chan, sdu) != 0){
-    //     assert(0);
-    // }
+    // Allocate a new mbuf/SDU.
+    sdu = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_rx, 0);
+    assert(sdu != NULL);
+
+    // Signal the peer it is allowed to send data.
+    res = ble_l2cap_recv_ready(chan, sdu);
+    assert(res == 0);
 
     printf("mempool free blocks: rx = %d, tx = %d\n", sdu_coc_mbuf_mempool_rx.mp_num_free, sdu_coc_mbuf_mempool_tx.mp_num_free);
 }
@@ -163,16 +198,12 @@ int l2cap_coc_accept(uint16_t conn_handle, uint16_t peer_mtu, struct ble_l2cap_c
 
     printf("LE CoC accepting, chan: 0x%08x, peer_mtu %d\n", (uint32_t) chan, peer_mtu);
 
-    // Commented for mbedtls uses:
+    sdu_rx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_rx, 0);
+    if(!sdu_rx){
+        return BLE_HS_ENOMEM;
+    }
 
-    // sdu_rx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_rx, 0);
-    // if(!sdu_rx){
-    //     return BLE_HS_ENOMEM;
-    // }
-
-    // return ble_l2cap_recv_ready(chan, sdu_rx);
-
-    return 0;
+    return ble_l2cap_recv_ready(chan, sdu_rx);
 }
 
 void l2cap_coc_unstalled(uint16_t conn_handle, struct ble_l2cap_chan *chan){
@@ -355,7 +386,7 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
 
 /*** Read Buffer (mbuf pool) ***/
 
-size_t l2cap_read_rx_buffer(unsigned char* data, size_t len, sdu_queue* queue){
+size_t l2cap_read_rx_buffer(sdu_queue* queue, struct l2cap_coc_node* coc, unsigned char* data, size_t len){
     int res;
     struct os_mbuf* sdu = sdu_queue_get(queue);
     
@@ -374,11 +405,12 @@ size_t l2cap_read_rx_buffer(unsigned char* data, size_t len, sdu_queue* queue){
             bytes_read += unread_bytes_in_cur_sdu;
 
 
-            // Did read all the unread bytes of the current SDU. Now remove the SDU and get the next SDU.
+            // Did read all the unread bytes of the current SDU. Now remove the SDU, signal this via semaphore and get the next SDU.
             res = os_mbuf_free_chain(sdu);
             assert(res == 0);
             res = sdu_queue_remove(queue); // Sets queue.front_offset to 0 automatically.
             assert(res == 0);
+            xSemaphoreGive(coc->sdu_queue_removed_element_semaphore);
             sdu = sdu_queue_get(queue);
             if(sdu == NULL){
                 // queue is empty -> did read all the data from the SDUs in sdu_os_mbuf_pool_rx  -> report mbedTLS how many bytes we read so far
@@ -416,11 +448,12 @@ size_t l2cap_read_rx_buffer(unsigned char* data, size_t len, sdu_queue* queue){
             assert(res == 0);
         }
         else{
-            // We had to read all remaining bytes. Now remove the SDU.
+            // We had to read all remaining bytes. Now remove the SDU and signal this via semaphore.
             res = os_mbuf_free_chain(sdu);
             assert(res == 0);
             res = sdu_queue_remove(queue); // Sets queue.front_offset to 0 automatically.
             assert(res == 0);
+            xSemaphoreGive(coc->sdu_queue_removed_element_semaphore);
         }
         return len;
     }

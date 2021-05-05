@@ -4,6 +4,7 @@
 #include "host/ble_hs.h"
 #include "../src/ble_hs_priv.h"
 #include "host/ble_l2cap.h"
+#include "freertos/semphr.h"
 
 #include "app_config.h"
 #include "sdu_queue.h"
@@ -23,7 +24,9 @@ struct l2cap_coc_node{
     SLIST_ENTRY(l2cap_coc_node) next;
     struct ble_l2cap_chan *chan;
     SemaphoreHandle_t unstalled_semaphore;
+    SemaphoreHandle_t want_data_semaphore;
     SemaphoreHandle_t received_data_semaphore;
+    SemaphoreHandle_t sdu_queue_removed_element_semaphore;
 };
 
 SLIST_HEAD(l2cap_coc_list, l2cap_coc_node);
@@ -91,13 +94,15 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
 /*
  *  @brief          Reads data of the SDUs of a os_mbuf_pool. Access to the SDUs is acquired through the sdu_queue.
  *
+ *  @param queue    Initialized queue.
+ *  @param coc      The currenct COC.
  *  @param data     Buffer to write the received data to.
  *  @param len      Length of the data to read.
- *  @param queue    Initialized queue.
+ *  
  * 
  *  @return         Returns number of bytes read.
  */
-size_t l2cap_read_rx_buffer(unsigned char* data, size_t len, sdu_queue* queue);
+size_t l2cap_read_rx_buffer(sdu_queue* queue, struct l2cap_coc_node* coc, unsigned char* data, size_t len);
 
 /*** General ***/
 
