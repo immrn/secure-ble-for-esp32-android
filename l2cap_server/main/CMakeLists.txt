@@ -3,6 +3,7 @@ set(srcs "main.c"
         "../../esp_apis/app_l2cap.c"
         "../../esp_apis/app_misc.c"
         "../../esp_apis/ssl_ctx.c"
+        "../../esp_apis/app_ssl.c"
         "../../esp_apis/sdu_queue.c")
 
 idf_component_register(SRCS "${srcs}" 

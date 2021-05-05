@@ -74,6 +74,7 @@ uint8_t sdu_queue_increase_offset(sdu_queue* queue, sdu_queue_offset_t value){
 }
 
 void sdu_queue_print(sdu_queue* queue){
+#if (DEBUG_APP == 1)
     printf("SDU queue, len = %d, offset = %d:\n", queue->length, queue->front_offset);
 
     for(int i = 0; i < queue->length; i++){
@@ -92,4 +93,5 @@ void sdu_queue_print(sdu_queue* queue){
     //         print_mbuf_as_string(queue->storage_area[i]);
     //     }
     // }
+#endif
 }

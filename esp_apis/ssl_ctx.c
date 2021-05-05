@@ -7,8 +7,7 @@
 #define RNG_PERSONALITY "fb_steigtum"
 
 #ifdef SSL_CTX_DEBUG
-static void debug_callback(void* opaque_ctx, int level, const char* file_name, int line_number, const char* msg)
-{
+static void debug_callback(void* opaque_ctx, int level, const char* file_name, int line_number, const char* msg){
     printf("mbedtls_debug: length of upcoming message = %zu", sizeof(msg));
 	printf("[mbedtls_debug L%d] (\"%s\" in line %d): %s", level, file_name, line_number, msg);
 }
@@ -33,7 +32,7 @@ void ssl_ctx_create(
 	mbedtls_ssl_send_t* send_data_func,
 	mbedtls_ssl_recv_timeout_t* recv_data_func,
 	void* send_recv_ctx
-) {
+){
 	// Initialize the entropy source.
 	mbedtls_entropy_init(&ctx->entropy);
 
@@ -118,8 +117,7 @@ void ssl_ctx_create(
 	mbedtls_ssl_set_bio(&ctx->ssl, send_recv_ctx, send_data_func, NULL, recv_data_func);
 }
 
-void ssl_ctx_destroy(ssl_ctx* ctx)
-{
+void ssl_ctx_destroy(ssl_ctx* ctx){
 	// Free all our stuff.
 	mbedtls_ssl_free(&ctx->ssl);
 	mbedtls_ssl_config_free(&ctx->config);
@@ -130,8 +128,7 @@ void ssl_ctx_destroy(ssl_ctx* ctx)
 	mbedtls_entropy_free(&ctx->entropy);
 }
 
-const char* ssl_ctx_error_msg(int err)
-{
+const char* ssl_ctx_error_msg(int err){
 	if (!err)
 	{
 		return "Success";
@@ -143,8 +140,7 @@ const char* ssl_ctx_error_msg(int err)
 	return error_buf;
 }
 
-int ssl_ctx_perform_handshake(ssl_ctx* ctx)
-{
+int ssl_ctx_perform_handshake(ssl_ctx* ctx){
 	// Perform the SSL handshake.
 	int err = mbedtls_ssl_handshake(&ctx->ssl);
 
@@ -158,8 +154,7 @@ int ssl_ctx_perform_handshake(ssl_ctx* ctx)
 	return err;
 }
 
-int ssl_ctx_send(ssl_ctx* ctx, const unsigned char* data, size_t len)
-{
+int ssl_ctx_send(ssl_ctx* ctx, const unsigned char* data, size_t len){
 	size_t bytes_written = 0;
 
 	while (len > 0)
@@ -182,8 +177,7 @@ int ssl_ctx_send(ssl_ctx* ctx, const unsigned char* data, size_t len)
 	return 0;
 }
 
-int ssl_ctx_recv(ssl_ctx* ctx, unsigned char* data, size_t len)
-{
+int ssl_ctx_recv(ssl_ctx* ctx, unsigned char* data, size_t len){
 	size_t bytes_read = 0;
 
 	while (len > 0)
@@ -214,8 +208,7 @@ int ssl_ctx_recv(ssl_ctx* ctx, unsigned char* data, size_t len)
 	return 0;
 }
 
-void ssl_ctx_close_connection(ssl_ctx* ctx)
-{
+void ssl_ctx_close_connection(ssl_ctx* ctx){
 	mbedtls_ssl_close_notify(&ctx->ssl);
 	mbedtls_ssl_session_reset(&ctx->ssl);
 }

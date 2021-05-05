@@ -130,8 +130,8 @@ void l2cap_coc_recv(uint16_t conn_handle, struct ble_l2cap_chan *chan, struct os
     int res;
     struct l2cap_conn* conn;
     struct l2cap_coc_node *coc;
-    static int sdu_count = 0; // TODO DEBUG remove
-    
+    static int sdu_count = 0;
+
     printf("LE CoC SDU received, #%d, chan: 0x%08x, data len %d\n", sdu_count++, (uint32_t) chan, OS_MBUF_PKTLEN(sdu));
 
     res = sdu_queue_add(&sdu_queue_rx, sdu);
@@ -155,7 +155,7 @@ void l2cap_coc_recv(uint16_t conn_handle, struct ble_l2cap_chan *chan, struct os
     //     assert(0);
     // }
 
-    printf("mempool free blocks: rx = %d, tx = %d\n\n", sdu_coc_mbuf_mempool_rx.mp_num_free, sdu_coc_mbuf_mempool_tx.mp_num_free);
+    printf("mempool free blocks: rx = %d, tx = %d\n", sdu_coc_mbuf_mempool_rx.mp_num_free, sdu_coc_mbuf_mempool_tx.mp_num_free);
 }
 
 int l2cap_coc_accept(uint16_t conn_handle, uint16_t peer_mtu, struct ble_l2cap_chan *chan){
@@ -295,10 +295,9 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
     struct l2cap_coc_node *coc;
     struct l2cap_conn *conn;
     struct os_mbuf *sdu_tx;
-    static int packet_count = 0; // TODO DEBUG remove
+    static int packet_count = 0;
 
     printf("mempool free blocks: rx = %d, tx = %d\n", sdu_coc_mbuf_mempool_rx.mp_num_free, sdu_coc_mbuf_mempool_tx.mp_num_free);
-
     printf("Sending L2CAP packet #%d: connection = %d, COC = %d, len = %d\n", packet_count++, conn_handle, coc_idx, len);
 
     sdu_tx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_tx, 0);
@@ -324,18 +323,12 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
         return res;
     }
 
-    // do {
-    //     ble_hs_lock();
-    //     res = ble_l2cap_send(coc->chan, sdu_tx);
-    //     ble_hs_unlock();
-    //     // TODO other solution to locking/unlocking may be a queue?
-    // } while (res == BLE_HS_EBUSY);
-
     // Send L2CAP packet. If host is busy (that's when the COC module is still stalled with data), wait for it using a semaphore, that is obtained when the COC runs the unstalled-event.
     int semaphore_res;
     do{
         res = ble_l2cap_send(coc->chan, sdu_tx);
         if(res == BLE_HS_EBUSY || res == BLE_HS_ESTALLED){
+            // Await for the COC becoming unstalled
             semaphore_res = xSemaphoreTake(coc->unstalled_semaphore, portMAX_DELAY);
             if(semaphore_res == pdTRUE){
                 printf("COC got unstalled.\n");
@@ -419,7 +412,8 @@ size_t l2cap_read_rx_buffer(unsigned char* data, size_t len, sdu_queue* queue){
         if(len < unread_bytes_in_cur_sdu){
             // We didn't have to read all remaining bytes of the SDU.
             // Add the amount of bytes we did read to the offset.
-            sdu_queue_increase_offset(queue, len);
+            res = sdu_queue_increase_offset(queue, len);
+            assert(res == 0);
         }
         else{
             // We had to read all remaining bytes. Now remove the SDU.

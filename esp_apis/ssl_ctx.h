@@ -1,9 +1,6 @@
 #ifndef ___SSL_CTX_H___
 #define ___SSL_CTX_H___
 
-// If this is defined, mbedtls prints debug messages to stdout.
-// #define SSL_CTX_DEBUG
-
 #include "mbedtls/config.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/debug.h"
@@ -12,6 +9,8 @@
 #include "mbedtls/pk.h"
 #include "mbedtls/ssl.h"
 #include "mbedtls/x509.h"
+
+#include "app_config.h"
 
 // The transport layer has been closed upon a read.
 #define SSL_CTX_TRANSPORT_CLOSED 1
