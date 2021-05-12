@@ -141,7 +141,6 @@ void l2cap_coc_recv(uint16_t conn_handle, struct ble_l2cap_chan *chan, struct os
     int res;
     struct l2cap_conn* conn;
     struct l2cap_coc_node *coc;
-    uint8_t queue_was_empty = 0;
     static unsigned int sdu_count = 0;
 
     ESP_LOGI(L2CAP_TAG, "Received SDU #%d, chan: 0x%08x, data len %u", sdu_count++, (uint32_t) chan, OS_MBUF_PKTLEN(sdu));

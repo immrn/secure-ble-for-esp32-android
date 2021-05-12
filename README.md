@@ -1,10 +1,12 @@
 # secure-ble-for-esp32-android
 1. [Prerequisites](#1-Prerequisites)
-2. [Before Building](#2-Before-Building)
+2. [Setup](#2-Setup)
 3. [Build](#3-Build)
-4. [How It Works](#4-How-It-Works)
+4. [Application Details](#4-Application-Details)
 5. [Links and Examples to Get Started](#5-Links-and-Examples-to-Get-Started)
 6. [Continuation](#6-Continuation)
+
+**Follow the [Setup](#2-Setup) section before building the projects for the first time!**
 
 ## 1. Prerequisites
 
@@ -17,13 +19,18 @@
 	<!--	- mbedtls: download [here](https://tls.mbed.org/download) or install via a package manager (Ubuntu: `$ sudo apt install libmbedtls-dev`) -->
 - [Android Studio](https://developer.android.com/studio)
 
-## 2. Before Building
 
-In `l2cap_client/main/main.c` <!-- TODO --> change `peer_bt_addr` to the address the client shall connect to.
+
+## 2. Setup
+
+To use these projects you need to create a subscription payload. Have a look at  
+
+In `l2cap_client/main/main.c` change `peer_bt_addr` to the address the client shall connect to.
+<!-- TODO for Android project too -->
 
 You have to generate the certificates for the client and server application:
 - **if using Linux/MacOS**:
-	- in `secure-ble-for-esp32-android` run the following (for more information look into `gen_cert_chain.sh`)
+	- in `secure-ble-for-esp32-android/` run the following (for more information look into `gen_cert_chain.sh`)
 		```
 		$ chmod +x ./gen_cert_chain.sh
 		$ ./gen_cert_chain.sh PATH/TO/ESP/DIRECTORY
@@ -32,7 +39,7 @@ You have to generate the certificates for the client and server application:
 	<details><summary>Click here</summary>
 	<p>
 
-	- make a dir `certs`, go into `certs`
+	- make a dir `certs/`, go into `certs/`
 	- set alias for "mbedtls_gen_key" to path/to/.../esp/esp-idf/components/mbedtls/mbedtls/programs/pkey/gen_key
 	- set alias for "mbedtls_cert_write" to path/to/.../esp/esp-idf/components/mbedtls/mbedtls/programs/x509/cert_write
 	- maybe adjust the following section and run it:
@@ -53,13 +60,13 @@ You have to generate the certificates for the client and server application:
 		mbedtls_gen_key type=rsa rsa_keysize=4096 filename=bike_srv.key format=pem
 		mbedtls_cert_write issuer_crt=ca.crt subject_key=bike_srv.key subject_name=CN=fb_steigtum_bike_srv,O=tubaf,C=de output_file=bike_srv.crt
 		```
-	- in dir `l2cap_server` make the dir `spiffs_image/crypto`
-	- copy following files from `certs` into into the dir <!-- TODO update dir--> `l2cap_server/spiffs_image/crypto`:
+	- in `l2cap_server/` make the dir `spiffs_image/crypto/`
+	- copy following files from `certs/` into into the dir <!-- TODO update dir--> `l2cap_server/spiffs_image/crypto/`:
 		- `bike_srv.key`
 		- `bike_srv.crt`
 		- `ca.crt`
-	- in dir `l2cap_client` make the dir <!-- TODO update dir-->`spiffs_image/crypto`
-	- copy following files from `certs` into into the dir <!-- TODO update dir--> `l2cap_client/spiffs_image/crypto`:
+	- in `l2cap_client/` make the dir <!-- TODO update dir-->`spiffs_image/crypto/`
+	- copy following files from `certs/` into into the dir <!-- TODO update dir--> `l2cap_client/spiffs_image/crypto/`:
 		- `app_clt.crt`
 		- `app_clt.key`
 		- `backend_subscript.crt`
@@ -70,23 +77,25 @@ You have to generate the certificates for the client and server application:
 
 	<!-- TODO: add debug stuff maybe -->
 
+
+
 ## 3. Build
 
 ### ESP32 App:
 - depends on how you made your choice in the [Get-Started-Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html)
-- Hint: if esp-idf was installed manually, in <!-- TODO update dir--> `l2cap_server` run
+- Hint: if esp-idf was installed manually, in <!-- TODO update dir--> `l2cap_server/` run
 	```
 	$ idf.py -p PORT size flash monitor
 	```
 
 ### Android App:
+- TODO
+
+
 
 ## 4. Application Details
 
-### TLS (mbedtls) over L2CAP
-
-#### Buffer Management
-**Reading Bytes:** TODO
+<!-- TODO: General details like throughput -->
 
 ### Connection Establishment
 | Server | Client |
@@ -101,8 +110,43 @@ You have to generate the certificates for the client and server application:
 | Connected to client (L2CAP) | Connected to server (L2CAP) |
 | | |
 | TLS-Handshake | TLS-Handshake |
+| Secure communication | Secure communication |
+| | |
+| | <-- Send subscription |
+| Receive and verify subscription <-- | |
 
-When TLS wants to receive bytes it sends the *receive_ready* command of L2CAP and will wait until it received bytes. The other endpoint can only send L2CAP Packets if it received the *receive_ready* command.
+### Subscription
+Concerning the project [SteigtUM](https://www.interaktive-technologien.de/projekte/steigtum) (a bike sharing service; user is client, bike is server) the subscription is used to make sure that the user is authorized to rent the bike.
+
+<details><summary> Details </summary>
+<p>
+Subscriptions are used to verify as a server (bike) if a client is authorized to rent this bike. 
+Because this is just a prototype, the subscription payload is flashed to the client application but in a real application the client must request and receive a subscription from the back end server as you can see in the following graphic:
+
+<img src="./doc/graphics/subscription.svg">
+
+<!-- TODO ist Backend nun intermediate CA und erstellt sub cert und sub key selbst? Wie soll sonst das sub cert von der Root CA erstellt werden ohn e den sub key zu übertragen? -->
+
+The subscription certificate must be previously issued by a CA. The subscription certificate and key should be used for all subscriptions in a longer period, so you don't have to create a subscription for each renting.
+
+When the server (bike) verifies the subscription, it checks the common name of the subscription certificate.
+That means you should verify for the same common name you defined in the subscription certificate.
+At the moment the server checks for the common name `fb_steigtum_backend_subscript`.
+
+**Structure of the Subscription:**
+
+```
+- length of payload (2 bytes)
+- payload
+- length of payload signature (2 bytes)
+- payload signature
+- length of signer certificate (2 bytes)
+- signer certificate
+```
+
+To adjust the content of the payload edit `l2cap_client/spiffs/crypto/` <!-- TODO or `the android app project` --> . Then rebuild the application.
+</p>
+</details>
 
 ### ESP
 #### Tasks / Threading
@@ -112,18 +156,19 @@ Because this ESP32 contains a dual core processor FreeRTOS-Tasks are either pinn
 	- the app itself
 - APP_CPU (1) Tasks:
 
-### Configuration
-#### ESP
-It's already configured if you are using the projects `l2cap_server` or `l2cap_client`.
-- **mbedtls debugging**
-	- in `esp_apis/ssl_ctx.h` set line 5 to `#define SSL_CTX_DEBUG` <!-- TODO Maybe adjust location -->
-	- run `idf.py menuconfig`
+#### Configuration
+In `l2cap_server/` and `l2cap_client/` the following configurations are done already.
+- **required for mbedtls debugging**
+	- in `esp_apis/ssl_ctx.h` set line 5 to `#define SSL_CTX_DEBUG` <!-- TODO Maybe adjust location and line -->
+	- in a ESP-IDF-Project like `l2cap_server/` or `l2cap_client/` run `idf.py menuconfig` and adjust the following values:
 		- _Component config_ ->
 			- _mbedTLS_ -> _Enable mbedTLS debugging_ -> set true = (*)
 			- _ESP System Settings_ -> _Main task stack size_ -> 6000 works definitely, standard value was 3584 (increase if running into a stack overflow in task main)
 			- _ESP System Settings_ -> _Channel for console output_ -> _Custom UART_
 			- _ESP System Settings_ -> _UART console baud rate_ -> 230400
 		- _Serial flasher config_ -> _`idf.py monitor` baud rate_ -> 230400
+
+
 
 ## 5. Links and Examples to Get Started
 ### ESP-IDF
@@ -137,6 +182,8 @@ It's already configured if you are using the projects `l2cap_server` or `l2cap_c
 ### mbedtls:
 - [knowledge base / how to](https://tls.mbed.org/kb/how-to) or [knowledge base](https://tls.mbed.org/kb) in general
 	- [mbedtls tutorial](https://tls.mbed.org/kb/how-to/mbedtls-tutorial)
+
+
 
 ## 6. Continuation
 

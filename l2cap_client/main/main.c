@@ -70,11 +70,12 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
             return ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_HS_FOREVER, &disc_params, on_gap_event, NULL);
         }
         case BLE_GAP_EVENT_DISC:{
-            printf("received advertisement; event_type=%d rssi=%d addr_type=%d addr=",
+            printf("received advertisement;\n    event_type = %d  rssi = %d  addr_type = %d  addr = ",
                 event->disc.event_type,
                 event->disc.rssi,
                 event->disc.addr.type);
             print_addr(event->disc.addr.val);
+            printf("\n");
 
             // There is no adv data to print in case of connectable directed advertising
             if (event->disc.event_type == BLE_HCI_ADV_RPT_EVTYPE_DIR_IND) {

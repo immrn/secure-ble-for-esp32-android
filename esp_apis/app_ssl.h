@@ -26,13 +26,13 @@ int recv_data(void* ctx, unsigned char* data, size_t len, uint32_t timeout_msec)
  *
  *  @return     TODO
  */
-int read_subscription_part(ssl_ctx* ctx, unsigned char* buf, size_t max_len, size_t* out_len);
+int verify_subscription(ssl_ctx* ctx);
 
 /*  @brief      TODO
  *
  *  @return     TODO
  */
-int verify_subscription(ssl_ctx* ctx);
+int send_subscription(ssl_ctx* ctx);
 
 /*  @brief      Await L2CAP COC connection and try to perform a TLS handshake.
  */

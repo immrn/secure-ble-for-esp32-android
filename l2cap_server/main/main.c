@@ -65,11 +65,12 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
             return ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &adv_params, on_gap_event, NULL);
         }
         case BLE_GAP_EVENT_DISC:{
-            printf("received advertisement; event_type=%d rssi=%d addr_type=%d addr=",
+            printf("received advertisement;\n    event_type = %d  rssi = %d  addr_type = %d  addr = ",
                 event->disc.event_type,
                 event->disc.rssi,
                 event->disc.addr.type);
             print_addr(event->disc.addr.val);
+            printf("\n");
 
             // There is no adv data to print in case of connectable directed advertising
             if (event->disc.event_type == BLE_HCI_ADV_RPT_EVTYPE_DIR_IND) {
@@ -524,7 +525,13 @@ void app_main(void){
     // Create SSL context
     io_ctx io;
     ssl_ctx ctx;
-	ssl_ctx_create(&ctx, MBEDTLS_SSL_IS_SERVER, "/spiffs/crypto/bike_srv.key", "/spiffs/crypto/bike_srv.crt", "/spiffs/crypto/ca.crt", "fb_steigtum_app_clt", send_data, recv_data, &io);
+	ssl_ctx_create( &ctx,
+                    MBEDTLS_SSL_IS_SERVER,
+                    "/spiffs/crypto/bike_srv.key",
+                    "/spiffs/crypto/bike_srv.crt",
+                    "/spiffs/crypto/ca.crt",
+                    "fb_steigtum_app_clt",
+                    send_data, recv_data, &io);
 
     // Set up advertising
     ble_svc_gap_init();

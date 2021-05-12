@@ -62,7 +62,7 @@ void print_adv_fields(const struct ble_hs_adv_fields *fields){
     int i;
 
     if(fields->flags != 0){
-        printf("    flags=0x%02x:\n", fields->flags);
+        printf("    flags = 0x%02x:\n", fields->flags);
 
         if(!(fields->flags & BLE_HS_ADV_F_DISC_LTD) && !(fields->flags & BLE_HS_ADV_F_DISC_GEN)){
             printf("        Non-discoverable mode\n");
@@ -115,23 +115,23 @@ void print_adv_fields(const struct ble_hs_adv_fields *fields){
     // }
 
     if(fields->tx_pwr_lvl_is_present){
-        printf("    tx_pwr_lvl=%d\n", fields->tx_pwr_lvl);
+        printf("    tx_pwr_lvl = %d\n", fields->tx_pwr_lvl);
     }
 
     if(fields->slave_itvl_range != NULL){
-        printf("    slave_itvl_range=");
+        printf("    slave_itvl_range = ");
         print_bytes(fields->slave_itvl_range, BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN);
         printf("\n");
     }
 
     if(fields->svc_data_uuid16 != NULL){
-        printf("    svc_data_uuid16=");
+        printf("    svc_data_uuid16 = ");
         print_bytes(fields->svc_data_uuid16, fields->svc_data_uuid16_len);
         printf("\n");
     }
 
     if(fields->public_tgt_addr != NULL){
-        printf("    public_tgt_addr=");
+        printf("    public_tgt_addr = ");
         u8p = fields->public_tgt_addr;
         for(i = 0; i < fields->num_public_tgt_addrs; i++){
             print_addr(u8p);
@@ -141,33 +141,33 @@ void print_adv_fields(const struct ble_hs_adv_fields *fields){
     }
 
     if(fields->appearance_is_present){
-        printf("    appearance=0x%04x\n", fields->appearance);
+        printf("    appearance = 0x%04x\n", fields->appearance);
     }
 
     if(fields->adv_itvl_is_present){
-        printf("    adv_itvl=0x%04x\n", fields->adv_itvl);
+        printf("    adv_itvl = 0x%04x\n", fields->adv_itvl);
     }
 
     if(fields->svc_data_uuid32 != NULL){
-        printf("    svc_data_uuid32=");
+        printf("    svc_data_uuid32 = ");
         print_bytes(fields->svc_data_uuid32, fields->svc_data_uuid32_len);
         printf("\n");
     }
 
     if(fields->svc_data_uuid128 != NULL){
-        printf("    svc_data_uuid128=");
+        printf("    svc_data_uuid128 = ");
         print_bytes(fields->svc_data_uuid128, fields->svc_data_uuid128_len);
         printf("\n");
     }
 
     if(fields->uri != NULL){
-        printf("    uri=");
+        printf("    uri = ");
         print_bytes(fields->uri, fields->uri_len);
         printf("\n");
     }
 
     if(fields->mfg_data != NULL){
-        printf("    mfg_data=");
+        printf("    mfg_data = ");
         print_bytes(fields->mfg_data, fields->mfg_data_len);
         printf("\n");
     }
@@ -176,10 +176,11 @@ void print_adv_fields(const struct ble_hs_adv_fields *fields){
 void decode_adv_data(const uint8_t *adv_data, uint8_t adv_data_len, void *arg){
     struct ble_hs_adv_fields fields;
 
-    printf(" data_length=%d data=", adv_data_len);
+    printf("    data (length = %d):\t", adv_data_len);
     print_bytes(adv_data, adv_data_len);
+    printf("\n");
 
-    printf(" fields:\n");
+    printf("    fields:\n");
     ble_hs_adv_parse_fields(&fields, adv_data, adv_data_len);
     print_adv_fields(&fields);
 }
