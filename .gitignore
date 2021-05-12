@@ -1,16 +1,26 @@
-#Build
-
-#Example stuff
+#Application stuff
 l2cap_server/build/**
-l2cap_server/spiffs_image/**
+l2cap_server/spiffs_image/**/*.key
+l2cap_server/spiffs_image/**/*.crt
+
 l2cap_client/build/**
-l2cap_client/spiffs_image/**
+l2cap_client/spiffs_image/**/*.key
+l2cap_client/spiffs_image/**/*.crt
 
 #Editors
 .vscode
 
 #Certificates and keys
 certs/**
+
+#tex misc
+doc/bachelor_thesis_german/*.aux
+doc/bachelor_thesis_german/*.bcf
+doc/bachelor_thesis_german/*.lof
+doc/bachelor_thesis_german/*.log
+doc/bachelor_thesis_german/*.lot
+doc/bachelor_thesis_german/*.xml
+doc/bachelor_thesis_german/*.toc
 
 #private files
 todo.md

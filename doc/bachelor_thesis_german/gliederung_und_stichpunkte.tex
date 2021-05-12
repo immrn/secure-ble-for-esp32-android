@@ -1,0 +1,211 @@
+\documentclass[doktyp=barbeit]{TUBAFarbeiten}
+
+\usepackage{selinput}% Auswahl der Dateikodierung (ansi,latin1,utf8,...)
+	\SelectInputMappings{adieresis={ä},germandbls={ß},Euro={€}}% Zeichenzuordnung für selinput.sty
+\usepackage[T1]{fontenc}% Einstellung Fontencoding
+
+\usepackage{csquotes}% Einstellung zu Anführungszeichen; wird von biblatex.sty gefordert
+\usepackage[backend=biber,sortlocale=de_DE_phonebook]{biblatex}% bessere Literaturverarbeitung
+\addbibresource{tubafarbeiten-beispiel.bib}% welche Literaturdatenbank genutzt werden soll; Endung nicht vergessen!
+
+%\usepackage{setspace}% Einstellungen Zeilenabstand
+	%\onehalfspacing% Einstellungen Zeilenabstand
+
+\TUBAFFakultaet{Fakultät für Mathematik und Informatik}
+\TUBAFInstitut{Institut für Informatik}
+\TUBAFLehrstuhl{Lehrstuhl für Betriebssysteme und Kommunikationstechnologien}
+
+%\TUBAFZweitlogo{\includegraphics{thekla_logo.jpg}}
+
+\TUBAFTitel[Entwicklung einer Sicherheitsinfrastruktur zur Bluetooth-Kommunikation zwischen Smartphone und Mikrocontroller]{Entwicklung einer Sicherheitsinfrastruktur zur Bluetooth-Kommunikation zwischen Smartphone und Mikrocontroller}
+\TUBAFBetreuer{Prof.\,Dr. Konrad Froitzheim}
+\TUBAFKorrektor{M.Sc. Jonas Treumer}%TODO Betreuer Lorenzo Neumann
+\TUBAFAutor[M. Käsemodel]{Marian Käsemodel}
+\TUBAFStudiengang{Angewandte Informatik}
+\TUBAFVertiefung{Technik}
+\TUBAFMatrikel{62\,412}
+\TUBAFDatum[]{\today}%TODO
+
+\begin{document}
+
+\maketitle
+
+\TUBAFErklaerungsseite
+
+
+\KOMAoptions{
+	listof=totoc	% Abbildungs- und Tabellenverzeichnis im Inhaltsverzeichnis
+}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\section{Einleitung}
+\subsection{Themenstellung}
+\begin{itemize}
+	\item BT als Kommunikationstechnolgie verbreitet -> BLE als Variante mit geringem Energieverbrauch ideal für batteriebetriebene Systeme -> überleiten zu SteigtUM
+	\item Projekt SteigtUM
+	\begin{itemize}
+		\item ist Hintergrund dieser Arbeit, erklären: Verleihdienst für elektrische Kleinfahrzeuge (u.a. Lastenfahrräder)
+		\item Individualverkehr für Kurzstrecken emissionsfrei gestalten
+		\item Kommunikation muss sicher sein, da Buchungsvorgänge, Datenschutz, verhindern von Manipulation, ...
+	\end{itemize}
+	\item daraus auf allgemeine Lösung ableiten für eine sichere Infrastruktur basierend auf BLE zwischen MCU und Smartphone
+	\item Infrastruktur beschränkt sich nicht zwangsweise nur auf MCU und Smartphone
+\end{itemize}
+\subsection{Problemstellung}
+\begin{itemize}
+	\item Ziel ist Entwicklung einer Infrastruktur, die eine sichere Kommunikation zwischen MCU und Smartphone ermöglicht
+	\item dabei sollen MCU und Smartphone nur mittels BLE miteinander kommunizieren
+	\item BLE weißt einige Schwachstellen auf, weswegen eine Lösung gefordert ist um BLE sicher zwischen MCU und Smartphone zu nutzen
+	\begin{itemize}
+		\item Schutz vor Außenstehenden und Software, die auf dem Smartphone agiert.
+	\end{itemize}
+	\item Zum Beweis der Funktionsfähigkeit der Infrastruktur dient eine Implementierung, die sich auf den Ausleihprozess des Projektes SteigtUM bezieht
+	\begin{itemize}
+		\item weitere Kommunikationsparteien (Backend) und deren Verbindungen werden nur simuliert dargestellt
+		\item Verbindung zwischen Fahrrad und Backend nicht zwingend erforderlich
+		\item bei Wiederherstellung einer abgebrochenen Verbindung soll die Verbindung zwische App und Backend nicht zwingend sein
+	\end{itemize}
+\end{itemize}
+
+\section{Grundlagen zu Bluetooth Low Energy}
+\subsection{Abgrenzung von Bluetooth Classic}
+\begin{itemize}
+	\item Wesentliche Unterschiede zwischen BLE und BT Classic
+\end{itemize}
+\subsection{Aufbau}
+	\subsubsection{Controller Stack}
+	\begin{itemize}
+		\item Funktionsweise der Layer: PHY und LL (Link Layer)
+	\end{itemize}
+	\subsubsection{Host Controller Interface}
+	\subsubsection{Host Stack}
+	\begin{itemize}
+		\item Funktionsweise der Layer: L2CAP (Logical Link Control and Adaption Protocol), GATT (Genric Attribute Profile), GAP (Generic Access Profile), Argumentation, wieso L2CAP (und nicht GATT) genutzt wird erst in Sektion "Infrastruktur"
+		\item SMP (Security Manager Protocol)
+	\end{itemize}
+\subsection{Verbindungsaufbau / Pairing}
+\begin{itemize}
+	\item Pairing-Methoden vorstellen mit Unterschieden in den BT-Versionen
+\end{itemize}
+\subsection{Sicherheitslücken}
+\begin{itemize}
+	\item Pairing-Methoden nicht in allen Versionen sicher (MITM, passives Abhören)
+	\item Keine Application-Layer-Security
+	\item ...
+\end{itemize}
+
+\section{Grundlagen zu Transport Layer Security}
+\begin{itemize}
+	\item allgemeine Erläuterung
+	\item sichere Versionen
+	\item nicht nur für gewöhnliche Anwendungsbeispiele geeignet
+\end{itemize}
+\subsection{Zertifikate}
+\begin{itemize}
+	\item Aufbau
+	\item CAs
+	\item Authentifikation/Authentifizierung
+\end{itemize}
+\subsection{Algorithmen}
+\begin{itemize}
+	\item Schlüsselaustausch
+	\item Verschlüsselung
+	\item Datenintegrität
+	\item Ciphersuits
+\end{itemize}
+\subsection{Protokoll}
+\begin{itemize}
+	\item Handshake
+	\item Record
+\end{itemize}
+\subsection{Sicherheit}
+\begin{itemize}
+	\item Angriffe gegen TLS
+	\item Forward Secrecy
+	\item TLS Interception
+\end{itemize}
+
+\section{Infrastruktur}
+\subsection{Ziel der Infrastruktur}
+\begin{itemize}
+	\item sichere Kommunikation zwischen Smartphone und MCU mittels TLS über BLE
+	\item ist unabhängig vom Projekt SteigtUM
+\end{itemize}
+\subsection{Topologie}
+\begin{itemize}
+	\item Client, Server
+	\item CA
+\end{itemize}
+\subsection{Transport}
+\begin{itemize}
+	\item Verwendung von L2CAP (und warum GATT ungeeignet ist)
+\end{itemize}
+\subsection{Sicherheit}
+\begin{itemize}
+	\item Positionierung und Begründung, dass Sicherheitsfeatures von BLE keinen vollständigen Schutz bieten (auch keine App-Layer-Security)
+	\item deswegen TLS verwenden für MITM-Protection, Schutz gegen passives Anhören, Datenintegrität, Ende-zu-Ende-Verschlüsselung, App-Layer-Security
+\end{itemize}
+\subsection{Verbindungsaufbau}
+\begin{itemize}
+	\item GAP (gewählte Pairing-Methode (nach BT-Version) dürfte keinen Einfluss haben)
+	\item TLS-Handshake
+	\item erst in Sektion "Implementierung" auf Subscription eingehen
+\end{itemize}
+
+\section{Implementierung}
+\subsection{Ziel der Implementierung}
+\begin{itemize}
+	\item Bezug zu SteigtUM / Verleih elektrischer Kleinfahrzeuge
+	\item Subscription-Modell sorgt dafür, dass das Fahrzeug sicherstellen kann, dass es vom Nutzer ausgeliehen werden darf
+\end{itemize}
+\subsection{Topologie}
+\begin{itemize}
+	\item Client
+	\item Server
+	\item Backend
+	\item CA
+\end{itemize}
+\subsection{Hardware und Software}
+\begin{itemize}
+	\item Android Smartphone, Android- und BT-Version
+	\item Android Bibliotheken, ...
+	\item MCU: ESP32... , BT-Version, weitere Eigenschaften/Features
+	\item ESP Software: FreeRTOS, SPIFFS (Filesystem), nimBLE, mbedTLS (TLS Version angeben)
+\end{itemize}
+\subsection{Transport und Sicherheit}
+\begin{itemize}
+	\item L2CAP
+	\item Verwaltung des RX-Buffers
+	\item Durchsatz
+	\item Konfiguration (MTU, ...)
+	\item gewählte Ciphersuites
+	\item ...
+\end{itemize}
+\subsection{Ausleihprozess}
+\begin{itemize}
+	\item Ausgangssituationen, Ablauf und Probleme des Ausleihprozesses
+\end{itemize}
+	\subsubsection{Verbindungsaufbau}
+	\begin{itemize}
+		\item ähnlich wie bei Erklärung der Infrastruktur nur mit Subscription und deren Übertragung und Verifizierung
+		\item erläutern was passiert, wenn Verbindung zum Fahrzeug abgebrochen ist (bspw. durch Abstellen des Fahrzeugs und kurzzeitiges Verlassen der BLE-Funkreichweite) und nun wiederhergestellt werden soll
+	\end{itemize}
+	\subsubsection{Beenden des Ausleihprozesses}
+	\begin{itemize}
+		\item erklären, wie sichergestellt wird, dass der Ausleihprozess vom Nutzer aus beendet wurde
+		\item bzw. Beendigung der Verbindung durch das Fahrzeug, wenn die Standzeit (Nutzer verließ BLE-Funkreichweite) überschritten wurde
+	\end{itemize}
+
+\section{Ausblick}
+\begin{itemize}
+	\item Weiterführung der Arbeit
+\end{itemize}
+
+\section{Zusammenfassung}
+
+\printbibliography[heading=bibintoc]
+
+\end{document}
