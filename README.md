@@ -85,7 +85,7 @@ You have to generate the certificates for the client and server application:
 - depends on how you made your choice in the [Get-Started-Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html)
 - Hint: if esp-idf was installed manually, in <!-- TODO update dir--> `l2cap_server/` run
 	```
-	$ idf.py -p PORT size flash monitor
+	$ idf.py -p PORT -b 230400 size flash monitor
 	```
 
 ### Android App:
@@ -119,15 +119,14 @@ You have to generate the certificates for the client and server application:
 Concerning the project [SteigtUM](https://www.interaktive-technologien.de/projekte/steigtum) (a bike sharing service; user is client, bike is server) the subscription is used to make sure that the user is authorized to rent the bike.
 
 <details><summary> Details </summary>
-<p>
-Subscriptions are used to verify as a server (bike) if a client is authorized to rent this bike. 
-Because this is just a prototype, the subscription payload is flashed to the client application but in a real application the client must request and receive a subscription from the back end server as you can see in the following graphic:
+<p> 
+Because this is just a prototype, the subscription payload is flashed to the client application and the client signs it on its own. In a real application the client must request and receive a subscription from the back end server as you can see in the following graphic:
 
 <img src="./doc/graphics/subscription.svg">
 
 <!-- TODO ist Backend nun intermediate CA und erstellt sub cert und sub key selbst? Wie soll sonst das sub cert von der Root CA erstellt werden ohn e den sub key zu übertragen? -->
 
-The subscription certificate must be previously issued by a CA. The subscription certificate and key should be used for all subscriptions in a longer period, so you don't have to create a subscription for each renting.
+The subscription certificate must be previously issued by the Root CA (like all other certificates and keys). The subscription certificate and key should be used for all subscriptions in a longer period, so you don't have to create a subscription for each renting.
 
 When the server (bike) verifies the subscription, it checks the common name of the subscription certificate.
 That means you should verify for the same common name you defined in the subscription certificate.
@@ -144,7 +143,7 @@ At the moment the server checks for the common name `fb_steigtum_backend_subscri
 - signer certificate
 ```
 
-To adjust the content of the payload edit `l2cap_client/spiffs/crypto/` <!-- TODO or `the android app project` --> . Then rebuild the application.
+To adjust the content of the payload edit `l2cap_client/spiffs/crypto/payload.txt` <!-- TODO or `the android app project` --> but note the max. bytes of the file in the `esp_apis/app_config.h`. Then rebuild the application.
 </p>
 </details>
 
@@ -152,8 +151,8 @@ To adjust the content of the payload edit `l2cap_client/spiffs/crypto/` <!-- TOD
 #### Tasks / Threading
 Because this ESP32 contains a dual core processor FreeRTOS-Tasks are either pinned to PRO_CPU (ID = 0, Protocol CPU) or APP_CPU (ID = 1, Application CPU).
 - PRO_CPU (0) Tasks:
+	- main task
 	- NimBLE Host
-	- the app itself
 - APP_CPU (1) Tasks:
 
 #### Configuration
