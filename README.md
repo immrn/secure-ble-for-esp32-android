@@ -6,7 +6,7 @@
 5. [Links and Examples to Get Started](#5-Links-and-Examples-to-Get-Started)
 6. [Continuation](#6-Continuation)
 
-**Follow the [Setup](#2-Setup) section before building the projects for the first time!**
+**Follow the [Setup](#2-Setup) section before building the first time!**
 
 ## 1. Prerequisites
 
@@ -17,7 +17,7 @@
 	- to follow this README it's recommended to [install the software manually](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html)
 	- after installing you should [build mbedtls](https://tls.mbed.org/kb/compiling-and-building/how-do-i-build-compile-mbedtls) in `esp/esp-idf/components/mbedtls/mbedtls/`, this is necessary to run certificate and key generation later
 	<!--	- mbedtls: download [here](https://tls.mbed.org/download) or install via a package manager (Ubuntu: `$ sudo apt install libmbedtls-dev`) -->
-- [Android Studio](https://developer.android.com/studio)
+- [Android Studio Artic Fox (2020.3.1) Canary 15](https://developer.android.com/studio/preview)
 
 
 

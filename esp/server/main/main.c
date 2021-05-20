@@ -9,14 +9,14 @@
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
 
+#include "app_tags.h"
 #include "app_gap.h"
 #include "app_misc.h"
 #include "app_l2cap.h"
 #include "ssl_ctx.h"
-#include "app_ssl.h"
+#include "ssl_callbacks.h"
 #include "app_config.h"
-#include "app_tags.h"
-
+#include "subscription.h"
 
 
 // Parameters for GAP advertising
@@ -549,6 +549,10 @@ void app_main(void){
     // Start advertising
     ret = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &adv_params, on_gap_event, NULL);
     assert(ret == 0);
+
+#if MYNEWT_VAL(BLE_HS_DEBUG)
+    printf("BLE DEBUG ENABLED\n");
+#endif
 
     test_mbedtls_1(&io, &ctx);
 

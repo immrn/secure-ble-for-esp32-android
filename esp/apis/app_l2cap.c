@@ -5,6 +5,8 @@
 
 #include "app_tags.h"
 
+
+
 int l2cap_conn_find_idx(uint16_t handle){
     for(int i = 0; i < l2cap_conns_num; i++){
         if(l2cap_conns[i].handle == handle){
@@ -160,7 +162,7 @@ void l2cap_coc_recv(uint16_t conn_handle, struct ble_l2cap_chan *chan, struct os
 
         if(semaphore_res == pdTRUE){
             ESP_LOGI(MBEDTLS_TAG, "It was looking for fresh data."); // TODO DEBUG remove
-            // Signal the COC the arrival of data, because it asked for it in recv_data() from app_ssl.c!
+            // Signal the COC the arrival of data, because it asked for it in recv_data() from ssl_callbacks.c!
             xSemaphoreGive(coc->received_data_semaphore);
         }else{
             ESP_LOGI(MBEDTLS_TAG, "It wasn't looking for fresh data."); // TODO DEBUG remove
@@ -383,7 +385,7 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
     return res;
 }
 
-/*** Read Buffer (mbuf pool) ***/
+// RX-Buffer
 
 size_t l2cap_read_rx_buffer(sdu_queue* queue, struct l2cap_coc_node* coc, unsigned char* data, size_t len){
     int res;
@@ -456,59 +458,4 @@ size_t l2cap_read_rx_buffer(sdu_queue* queue, struct l2cap_coc_node* coc, unsign
         }
         return len;
     }
-}
-
-// TODO REMOVE
-int l2cap_send_old_from_btshell(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data, uint16_t len){
-    struct l2cap_conn *conn;
-    struct l2cap_coc_node *coc;
-    struct os_mbuf *sdu_tx;
-    int i;
-    int rc;
-
-    printf("conn=%d, coc_idx=%d, len=%d\n", conn_handle, coc_idx, len);
-
-    conn = l2cap_conn_find(conn_handle);
-    if(conn == NULL){
-        printf("conn=%d does not exist\n", conn_handle);
-        return 0;
-    }
-
-    i = 0;
-    SLIST_FOREACH(coc, &conn->coc_list, next){
-        if(i == coc_idx){
-            break;
-        }
-        i++;
-    }
-    if(coc == NULL){
-        printf("Are you sure your channel exist?\n");
-        return 0;
-    }
-
-    sdu_tx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_tx, 0);
-    if (sdu_tx == NULL) {
-        printf("No memory in the test sdu pool\n");
-        return 0;
-    }
-
-    rc = os_mbuf_append(sdu_tx, data, len);
-    if(rc){
-        printf("Cannot append data %i !\n", i);
-        os_mbuf_free_chain(sdu_tx);
-        return rc;
-    }
-
-    rc = ble_l2cap_send(coc->chan, sdu_tx);
-    if(rc){
-        if(rc == BLE_HS_ESTALLED){
-          printf("CoC module is stalled with data. Wait for unstalled \n");
-        }else{
-            printf("Could not send data rc=%d\n", rc);
-            os_mbuf_free_chain(sdu_tx); // TODO STALL ISSUE: In btshell example os_mbuf_free_chain(sdu_tx) was NOT called here.
-        }
-        // TODO STALL ISSUE: In btshell example os_mbuf_free_chain(sdu_tx) was called here. In this case the client would receive an empty packet, if a previous call of l2cap_send is still stalling the channel
-    }
-
-    return rc;
 }

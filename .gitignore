@@ -1,11 +1,11 @@
-#Application stuff
-l2cap_server/build/**
-l2cap_server/spiffs_image/**/*.key
-l2cap_server/spiffs_image/**/*.crt
+#ESP
+esp/server/build/**
+esp/server/spiffs_image/**/*.key
+esp/server/spiffs_image/**/*.crt
 
-l2cap_client/build/**
-l2cap_client/spiffs_image/**/*.key
-l2cap_client/spiffs_image/**/*.crt
+esp/client/build/**
+esp/client/spiffs_image/**/*.key
+esp/client/spiffs_image/**/*.crt
 
 #Editors
 .vscode

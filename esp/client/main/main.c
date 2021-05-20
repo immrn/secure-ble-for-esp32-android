@@ -12,20 +12,23 @@
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
 
+#include "app_tags.h"
 #include "app_gap.h"
 #include "app_misc.h"
 #include "app_l2cap.h"
 #include "ssl_ctx.h"
-#include "app_ssl.h"
+#include "ssl_callbacks.h"
 #include "app_config.h"
-#include "app_tags.h"
+#include "subscription.h"
+
 
 
 
 // Address of Bluetooth peer device
+// TODO rm: the other address: 0xc6, 0x14, 0x62, 0xc4, 0x0a, 0x24
 static ble_addr_t peer_bt_addr = {
     .type = BLE_OWN_ADDR_PUBLIC,
-    .val = { 0xc6, 0x14, 0x62, 0xc4, 0x0a, 0x24 }
+    .val = { 0x46, 0x0F, 0xE1, 0xAB, 0x62, 0x24 }
 };
 
 // Parameters for GAP discovering
@@ -412,6 +415,10 @@ void app_main(void){
     // Start discovering
     ret = ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_HS_FOREVER, &disc_params, on_gap_event, NULL);
     assert(ret == 0);
+
+#if MYNEWT_VAL(BLE_HS_DEBUG)
+    printf("BLE DEBUG ENABLED\n");
+#endif
 
     test_mbedtls_1(&io, &ctx);
 

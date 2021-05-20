@@ -1,103 +1,19 @@
-#include "app_ssl.h"
+#include "subscription.h"
 
 #include <stdio.h>
-
-#include "esp_spiffs.h"
-#include "app_tags.h"
 #include "esp_log.h"
 #include "esp_err.h"
-#include "os/os_mbuf.h"
-#include "mbedtls/pk.h"
+// #include "esp_spiffs.h" TODO rm?
 #include "mbedtls/sha256.h"
 #include "mbedtls/x509.h"
+#include "mbedtls/pk.h"
+#include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 #include "app_l2cap.h"
-#include "app_config.h"
+#include "app_tags.h"
 
-/*** mbedTLS Callbacks ***/
 
-int send_data(void* ctx, const unsigned char* data, size_t len){
-    int res;
-    uint16_t compatible_len;
-    io_ctx* io = ctx;
-
-    // l2cap_send would fail if len > L2CAP_COC_MTU.
-    if(len > L2CAP_COC_MTU){
-        compatible_len = L2CAP_COC_MTU;
-    }else{
-        compatible_len = (uint16_t)len;
-    }
-
-    // Try to send. (l2cap_send blocks)
-    ESP_LOGI(MBEDTLS_TAG, "Want to send %d bytes!", compatible_len);
-	ESP_LOGI(MBEDTLS_TAG, "core id = %d, task handle = %p", xPortGetCoreID(), xTaskGetCurrentTaskHandle());
-    res = l2cap_send(io->conn->handle, io->coc_idx, data, compatible_len);
-
-    // If sending was successful, return the bytes that were sent.
-    if(res == 0 || res == BLE_HS_ESTALLED){
-		return compatible_len;
-    }
-
-    // Sending failed.
-    ESP_LOGE(MBEDTLS_TAG, "Sending failed!");
-    return -1;
-}
-
-int recv_data(void* ctx, unsigned char* data, size_t len, uint32_t timeout_msec){
-    int res;
-    io_ctx* io = ctx;
-    struct os_mbuf* sdu;
-    struct l2cap_coc_node* coc;
-
-    ESP_LOGI(MBEDTLS_TAG, "Want to read/recv %u bytes!", len);
-	ESP_LOGI(MBEDTLS_TAG, "core id = %d, task handle = %p", xPortGetCoreID(), xTaskGetCurrentTaskHandle());
-    sdu_queue_print(&sdu_queue_rx);
-
-	// Get the current COC.
-	coc = l2cap_coc_find_by_idx(io->conn, io->coc_idx);
-	assert(coc != NULL);
-
-    // Check if the RX Buffer (sdu_os_mbuf_pool_rx) is empty.
-	// Otherwise the RX Buffer contains unread data already and we skip the IF-Scope.
-    sdu = sdu_queue_get(&sdu_queue_rx);
-    if(sdu == NULL){
-        // sdu_queue_rx is empty -> sdu_os_mbuf_pool_rx is empty -> we have to receive data from the peer.
-
-        // Make the timeout value compatible for the upcoming semaphore.
-        if(timeout_msec == 0){
-            ESP_LOGI(MBEDTLS_TAG, "Set receive timeout to infinite.");
-            timeout_msec = portMAX_DELAY;
-        }else{
-            timeout_msec = timeout_msec / portTICK_PERIOD_MS;
-        }
-
-        // Await the incoming data.
-        ESP_LOGI(MBEDTLS_TAG, "Waiting for L2CAP to receive a SDU...");
-		xSemaphoreGive(coc->want_data_semaphore);
-        res = xSemaphoreTake(coc->received_data_semaphore, timeout_msec);
-        if(res != pdTRUE){
-            // Semaphore wasn't obtained.
-			ESP_LOGI(MBEDTLS_TAG, "Timeout: Didn't receive a SDU.");
-            return MBEDTLS_ERR_SSL_TIMEOUT;
-        }
-		ESP_LOGI(MBEDTLS_TAG, "Received a SDU.");
-
-        // Received the semaphore. The SDU was added to sdu_os_mbuf_pool_rx
-        // and as reference to sdu_queue_rx by l2cap_coc_recv().
-    }
-
-    // Read the RX Buffer and free resources of the buffer if possible.
-	ESP_LOGI(MBEDTLS_TAG, "Reading from buffer...");
-	res = l2cap_read_rx_buffer(&sdu_queue_rx, coc, data, len);
-
-	ESP_LOGI(MBEDTLS_TAG, "Did read %d bytes from buffer.", res);
-	sdu_queue_print(&sdu_queue_rx);
-	printf("\n");
-
-	// Return the bytes read.
-	return res;
-}
 
 /*** Subscription Process ***/
 
@@ -147,6 +63,7 @@ int verify_subscription(ssl_ctx* ctx){
 
 	// Read the payload.
 	unsigned char* payload_buf = (unsigned char*)malloc(sizeof(unsigned char) * MAX_PAYLOAD_LEN);
+	assert(payload_buf != NULL);
 	uint16_t payload_len;
 
 	err = read_subscription_part(ctx, payload_buf, MAX_PAYLOAD_LEN, &payload_len);
@@ -160,6 +77,7 @@ int verify_subscription(ssl_ctx* ctx){
 
 	// Hash the payload.
 	unsigned char* hash = (unsigned char*)malloc(sizeof(unsigned char) * 32);
+	assert(hash != NULL);
 	err = mbedtls_sha256_ret(payload_buf, payload_len, hash, 0);
 
 	if(err){
@@ -171,6 +89,7 @@ int verify_subscription(ssl_ctx* ctx){
 
 	// Read the signature.
 	unsigned char* signature_buf = (unsigned char*)malloc(sizeof(unsigned char) * 512);
+	assert(signature_buf != NULL);
 	uint16_t signature_len;
 
 	err = read_subscription_part(ctx, signature_buf, 512, &signature_len);
@@ -186,6 +105,7 @@ int verify_subscription(ssl_ctx* ctx){
 
 	// Read the signer certificate.
 	unsigned char* signer_crt_buf = (unsigned char*)malloc(sizeof(unsigned char) * 4096);
+	assert(signer_crt_buf != NULL);
 	uint16_t signer_crt_len;
 
 	read_subscription_part(ctx, signer_crt_buf, 4096, &signer_crt_len);
@@ -232,22 +152,19 @@ int verify_subscription(ssl_ctx* ctx){
 	// Verify the signature using the certificate's public key context and free the certificate.
 	err = mbedtls_pk_verify(&signer_crt.pk, MBEDTLS_MD_SHA256, hash, 32, signature_buf, signature_len);
 	mbedtls_x509_crt_free(&signer_crt);
+	free(hash);
+	free(signature_buf);
+	free(signer_crt_buf);
 
 	if(err){
 		printf("Failed to verify signature: %s\n", ssl_ctx_error_msg(err));
 		free(payload_buf);
-		free(hash);
-		free(signature_buf);
-		free(signer_crt_buf);
 		return 1;
 	}
 
 	// TODO: Pass the valid payload to read its content!
 
 	free(payload_buf);
-	free(hash);
-	free(signature_buf);
-	free(signer_crt_buf);
 
 	return 0;
 }
@@ -296,7 +213,7 @@ int send_subscription(ssl_ctx* ctx){
 	
 	// Read the payload.
 	unsigned char* payload_buf = (unsigned char*)malloc(sizeof(unsigned char) * MAX_PAYLOAD_LEN);
-	assert(payload_buf != NULL); // TODO bei allen buffers checken
+	assert(payload_buf != NULL);
 	read_file("/spiffs/crypto/payload.txt", payload_buf, MAX_PAYLOAD_LEN, &file_len);
 
 	// Send the payload length.
@@ -317,6 +234,7 @@ int send_subscription(ssl_ctx* ctx){
 
 	// Hash the payload.
 	unsigned char* hash = (unsigned char*)malloc(sizeof(unsigned char) * 32);
+	assert(hash != NULL);
 	err = mbedtls_sha256_ret(payload_buf, file_len, hash, 0);
 	free(payload_buf);
 
@@ -340,6 +258,7 @@ int send_subscription(ssl_ctx* ctx){
 
 	// Create the signature of the hash using the signer key.
 	unsigned char* signature_buf = (unsigned char*)malloc(sizeof(unsigned char) * 512);
+	assert(signature_buf != NULL);
 	uint16_t signature_len;
 
 	err = mbedtls_pk_sign(&signer_key, MBEDTLS_MD_SHA256, hash, 32, signature_buf, (size_t*)&signature_len, NULL, NULL);
@@ -373,6 +292,7 @@ int send_subscription(ssl_ctx* ctx){
 
 	// Read the signer certificate.
 	unsigned char* signer_crt_buf = (unsigned char*)malloc(sizeof(unsigned char) * 4096);
+	assert(signer_crt_buf != NULL);
 	uint16_t signer_crt_len;
 	read_file("/spiffs/crypto/backend_subscript.crt", signer_crt_buf, 4096, &signer_crt_len);
 
@@ -402,10 +322,6 @@ int send_subscription(ssl_ctx* ctx){
 
 void test_mbedtls_1(io_ctx* io, ssl_ctx* ctx){
     int err;
-
-#if MYNEWT_VAL(BLE_HS_DEBUG)
-    printf("BLE DEBUG ENABLED\n");
-#endif
 
     // Accept clients.
 	for (;;){

@@ -20,6 +20,8 @@
 #define INT_TO_PTR(x)     (void *)((intptr_t)(x))
 #define PTR_TO_INT(x)     (int) ((intptr_t)(x))
 
+
+
 struct l2cap_coc_node{
     SLIST_ENTRY(l2cap_coc_node) next;
     struct ble_l2cap_chan *chan;
@@ -54,6 +56,10 @@ os_membuf_t l2cap_sdu_coc_mem_tx[OS_MEMPOOL_SIZE(L2CAP_COC_BUF_COUNT_TX, L2CAP_C
 struct os_mbuf_pool sdu_os_mbuf_pool_tx;
 struct os_mempool sdu_coc_mbuf_mempool_tx;
 
+// Event handler
+int on_l2cap_event(struct ble_l2cap_event *event, void *arg);
+
+// L2CAP connection
 
 int l2cap_conn_find_idx(uint16_t handle);
 
@@ -63,7 +69,7 @@ struct l2cap_conn *l2cap_conn_add(struct ble_gap_conn_desc *desc);
 
 void l2cap_conn_delete_idx(int conn_idx);
 
-/*** l2cap coc ***/
+// L2CAP CoC
 
 struct l2cap_coc_node* l2cap_coc_find(struct l2cap_conn* conn, struct ble_l2cap_chan* chan);
 
@@ -89,24 +95,15 @@ int l2cap_reconfig(uint16_t conn_handle, uint16_t mtu, uint8_t num, uint8_t idxs
 
 int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data, uint16_t len);
 
-/*** Read Buffer (mbuf pool) ***/
+// RX-Buffer
 
-/*
- *  @brief          Reads data of the SDUs of a os_mbuf_pool. Access to the SDUs is acquired through the sdu_queue.
+/**	@brief          Reads data of the SDUs of a os_mbuf_pool. Access to the SDUs is acquired through the sdu_queue.
  *
  *  @param queue    Initialized queue.
  *  @param coc      The currenct COC.
  *  @param data     Buffer to write the received data to.
  *  @param len      Length of the data to read.
- *  
  * 
  *  @return         Returns number of bytes read.
  */
 size_t l2cap_read_rx_buffer(sdu_queue* queue, struct l2cap_coc_node* coc, unsigned char* data, size_t len);
-
-/*** General ***/
-
-int on_l2cap_event(struct ble_l2cap_event *event, void *arg);
-
-// TODO REMOVE
-int l2cap_send_old_from_btshell(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data, uint16_t len);

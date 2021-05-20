@@ -1,7 +1,7 @@
 
 
 // L2CAP
-#define APP_CID 0xffff
+#define APP_CID 0x0011
 #define L2CAP_COC_MTU 512
 
 // Subscription

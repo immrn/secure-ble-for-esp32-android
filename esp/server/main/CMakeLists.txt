@@ -1,13 +1,14 @@
 set(srcs "main.c"
-        "../../esp_apis/app_gap.c"
-        "../../esp_apis/app_l2cap.c"
-        "../../esp_apis/app_misc.c"
-        "../../esp_apis/ssl_ctx.c"
-        "../../esp_apis/app_ssl.c"
-        "../../esp_apis/sdu_queue.c")
+        "../../apis/app_gap.c"
+        "../../apis/app_l2cap.c"
+        "../../apis/app_misc.c"
+        "../../apis/ssl_ctx.c"
+        "../../apis/ssl_callbacks.c"
+        "../../apis/sdu_queue.c"
+        "../../apis/subscription.c")
 
 idf_component_register(SRCS "${srcs}" 
-                    INCLUDE_DIRS "." "../../esp_apis")
+                    INCLUDE_DIRS "." "../../apis")
 
 # Create a SPIFFS image from the contents of the 'spiffs_image' directory
 # that fits the partition named 'storage'. FLASH_IN_PROJECT indicates that
