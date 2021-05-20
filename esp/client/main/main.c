@@ -53,7 +53,7 @@ int on_gap_event(struct ble_gap_event *event, void *arg){
                 assert(res == 0);
                 print_conn_desc(&desc);
                 l2cap_conn_add(&desc);
-                l2cap_connect(desc.conn_handle, APP_CID, L2CAP_COC_MTU, 1);
+                l2cap_connect(desc.conn_handle, L2CAP_PSM, L2CAP_COC_MTU, 1);
             }
             return 0;
         }
@@ -401,7 +401,13 @@ void app_main(void){
     io_ctx io;
     ssl_ctx ctx;
     // Using ssl_ctx_create but as a client!
-	ssl_ctx_create(&ctx, MBEDTLS_SSL_IS_CLIENT, "/spiffs/crypto/app_clt.key", "/spiffs/crypto/app_clt.crt", "/spiffs/crypto/ca.crt", "fb_steigtum_bike_srv", send_data, recv_data, &io);
+	ssl_ctx_create( &ctx,
+                    MBEDTLS_SSL_IS_CLIENT,
+                    "/spiffs/crypto/app_clt.key",
+                    "/spiffs/crypto/app_clt.crt",
+                    "/spiffs/crypto/ca.crt",
+                    EXPECTED_COMMON_NAME,
+                    send_data, recv_data, &io);
 
     // Setup discovering
     memset(&disc_params, 0, sizeof(disc_params));

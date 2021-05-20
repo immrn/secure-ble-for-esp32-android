@@ -10,12 +10,15 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include "app_config.h"
 #include "app_l2cap.h"
 #include "app_tags.h"
 
 
 
-/*** Subscription Process ***/
+/*** Server-sided subscription process ***/
+
+#ifdef ENDPOINT_ROLE_SERVER
 
 int read_subscription_part(ssl_ctx* ctx, unsigned char* buf, uint16_t max_len, uint16_t* out_len){
 	int err;
@@ -59,6 +62,7 @@ int verify_subscription(ssl_ctx* ctx){
 	// - n bytes: signature
 	// - 2 bytes: Signer certificate length (including null terminator)
 	// - n bytes: Signer certificate (must be null-terminated, signed by CA, CN must be equal to "fb_steigtum_backend_subscript")
+
 	int err;
 
 	// Read the payload.
@@ -137,7 +141,7 @@ int verify_subscription(ssl_ctx* ctx){
 
 	// Verify the signer certificate.
 	uint32_t flags;
-	err = mbedtls_x509_crt_verify(&signer_crt, &ctx->ca_crt, NULL, "fb_steigtum_backend_subscript", &flags, NULL, NULL);
+	err = mbedtls_x509_crt_verify(&signer_crt, &ctx->ca_crt, NULL, EXPECTED_COMMON_NAME_SUBSCRIPTION, &flags, NULL, NULL);
 
 	if(err){
 		printf("Failed to validate signer certificate: %s\n", ssl_ctx_error_msg(err));
@@ -169,13 +173,21 @@ int verify_subscription(ssl_ctx* ctx){
 	return 0;
 }
 
-/*	This is used to bypass the usage of the back end server
- *	(we only want to "emulate" the back end server here).
- *	Do not use this for a real application but look at
- *	the section "Application Details" in README.md to
- *	get to know what the Client should do instead.
- */
+#endif /* ENDPOINT_ROLE_SERVER */
+
+
+
+/*** Client-sided subscription process ***/
+
+#ifdef ENDPOINT_ROLE_CLIENT
+
 void read_file(char* path, unsigned char* buf, uint16_t max_len, uint16_t* out_len){
+	// This is used to bypass the usage of the back end server
+	// (we only want to "emulate" the back end server here).
+	// Do not use this for a real application but look at
+	// the section "Application Details" in README.md to
+	// get to know what the Client should do instead.
+
 	int cur_char = 0;
 	FILE* file;
 
@@ -201,13 +213,15 @@ void read_file(char* path, unsigned char* buf, uint16_t max_len, uint16_t* out_l
 	return;
 }
 
-/*	This is used to bypass the usage of the back end server
- *	(we only want to "emulate" the back end server here).
- *	Do not use this for a real application but look at
- *	the section "Application Details" in README.md to
- *	get to know what the Client should do instead.
- */
+
+
 int send_subscription(ssl_ctx* ctx){
+	// This is used to bypass the usage of the back end server
+	// (we only want to "emulate" the back end server here).
+	// Do not use this for a real application but look at
+	// the section "Application Details" in README.md to
+	// get to know what the Client should do instead.
+
 	int err;
 	uint16_t file_len;
 	
@@ -320,6 +334,12 @@ int send_subscription(ssl_ctx* ctx){
 	return 0;
 }
 
+#endif /* ENDPOINT_ROLE_CLIENT */
+
+
+
+/*** General subscription process ***/
+
 void test_mbedtls_1(io_ctx* io, ssl_ctx* ctx){
     int err;
 
@@ -353,28 +373,30 @@ void test_mbedtls_1(io_ctx* io, ssl_ctx* ctx){
 
 		printf("----- Starting subscription exchange -----\n");
 
-		if(ctx->config.endpoint == 1){
-			// It's a server.
-			// Receive and verify the signed subscription.
-			err = verify_subscription(ctx);
-			if(err){
-				ssl_ctx_close_connection(ctx);
-				l2cap_disconnect(io->conn->handle, io->coc_idx);
-				assert(0);
-				//continue; TODO
-			}
+#ifdef ENDPOINT_ROLE_SERVER
+
+		// Receive and verify the signed subscription.
+		err = verify_subscription(ctx);
+		if(err){
+			ssl_ctx_close_connection(ctx);
+			l2cap_disconnect(io->conn->handle, io->coc_idx);
+			assert(0);
+			//continue; TODO
 		}
-		else{
-			// It's a client.
-			// Send the signed subscription.
-			err = send_subscription(ctx);
-			if(err){
-				ssl_ctx_close_connection(ctx);
-				l2cap_disconnect(io->conn->handle, io->coc_idx);
-				assert(0);
-				// continue; TODO
-			}
+
+#else /* Client */
+
+		// It's a client.
+		// Send the signed subscription.
+		err = send_subscription(ctx);
+		if(err){
+			ssl_ctx_close_connection(ctx);
+			l2cap_disconnect(io->conn->handle, io->coc_idx);
+			assert(0);
+			// continue; TODO
 		}
+
+#endif /* ENDPOINT_ROLE */
 
 		printf("----- Subscription exchange was successful -----\n");
 

@@ -305,129 +305,6 @@ static void failed_alloc_cb(size_t size, uint32_t caps, const char* func_name){
     return;
 }
 
-// Tests
-#if 0
-void test_sending_1(io_ctx* io){
-    // Send message 1
-    char* message = (char*)malloc(18 * sizeof(char));
-    if(message == NULL){
-        printf("Failed to alloc memory\n");
-        free(message);
-        return;
-    }
-    strcpy(message, "Hello from Server!");
-
-    l2cap_send(io->conn->handle, io->coc_idx, (const unsigned char*) message, 18);
-
-    // Send message 2
-    message = (char*)realloc(message, 25 * sizeof(char));
-    if(message == NULL){
-        printf("Failed to alloc memory\n");
-        free(message);
-        return;
-    }
-    strcpy(message, "Second Hello from Server!");
-
-    l2cap_send(io->conn->handle, io->coc_idx, (const unsigned char*) message, 25);
-
-    // Send message 3
-    int len = L2CAP_COC_MTU;
-    message = (char*)realloc(message, len * sizeof(char));
-    if(message == NULL){
-        printf("Failed to alloc memory\n");
-        free(message);
-        return;
-    }
-
-    FILE* f = fopen("/spiffs/crypto/bike_srv.crt", "r");
-    if(f == NULL){
-        printf("Can't open file\n");
-        return;
-    }
-    fread(message, len, sizeof(char), f);
-    fclose(f);
-
-    l2cap_send(io->conn->handle, io->coc_idx, (const unsigned char*) message, len);
-
-    free(message);
-}
-
-void test_sending_2(io_ctx* io, int iterator){
-    char* message = (char*)malloc(11 * sizeof(char));
-    strcpy(message, "Message ");
-    char* counter = (char*)malloc(12 * sizeof(char));
-
-    struct timeval start_time;
-    struct timeval stop_time;
-    gettimeofday(&start_time, NULL);
-    for(int i = 0; i < iterator; i++){
-        sprintf(counter, "%d", i);
-        strncat(message, counter, 3);
-        printf("%d\n", i);
-        l2cap_send(io->conn->handle, io->coc_idx, (const unsigned char*) message, 11);
-        strcpy(message, "Message ");
-    }
-    gettimeofday(&stop_time, NULL);
-    int long sec_diff = stop_time.tv_sec - start_time.tv_sec;
-    int long usec_diff;
-    if(stop_time.tv_usec >= start_time.tv_usec){
-        usec_diff = stop_time.tv_usec - start_time.tv_usec;
-    }
-    else{
-        usec_diff = 1000000 - start_time.tv_usec + stop_time.tv_usec;
-    }
-    printf("Time needed to send flood: %ld,%ld seconds\n", sec_diff, usec_diff);
-
-
-    sleep(1);
-    free(counter);
-    free(message);
-}
-
-void test_sending_3(io_ctx* io, int iterations){
-    // Get data from file
-    int len = L2CAP_COC_MTU;
-    char* message = (char*)malloc(len * sizeof(char));
-    if(message == NULL){
-        printf("Failed to alloc memory\n");
-        free(message);
-        return;
-    }
-    FILE* f = fopen("/spiffs/crypto/bike_srv.crt", "r");
-    if(f == NULL){
-        printf("Can't open file\n");
-        return;
-    }
-    fread(message, len, sizeof(char), f);
-    fclose(f);
-
-    // Start stopwatch
-    struct timeval start_time;
-    struct timeval stop_time;
-    gettimeofday(&start_time, NULL);
-
-    // Repeat sending data
-    for(int i = 0; i < iterations; i++){
-        printf("%d\n", i);
-        l2cap_send(io->conn->handle, io->coc_idx, (const unsigned char*) message, len);
-    }
-
-    // Get time
-    gettimeofday(&stop_time, NULL);
-    int long sec_diff = stop_time.tv_sec - start_time.tv_sec;
-    int long usec_diff;
-    if(stop_time.tv_usec >= start_time.tv_usec){
-        usec_diff = stop_time.tv_usec - start_time.tv_usec;
-    }
-    else{
-        usec_diff = 1000000 - start_time.tv_usec + stop_time.tv_usec;
-    }
-    printf("Time needed to send flood: %ld,%ld seconds\n", sec_diff, usec_diff);
-
-    free(message);
-}
-#endif
-
 
 
 void app_main(void){
@@ -519,7 +396,7 @@ void app_main(void){
     printf("mempool free blocks: rx = %d, tx = %d\n", sdu_coc_mbuf_mempool_rx.mp_num_free, sdu_coc_mbuf_mempool_tx.mp_num_free);
 
     // Create L2CAP server
-    ret = ble_l2cap_create_server(APP_CID, L2CAP_COC_MTU, on_l2cap_event, NULL);
+    ret = ble_l2cap_create_server(L2CAP_PSM, L2CAP_COC_MTU, on_l2cap_event, NULL);
     assert(ret == 0);
 
     // Create SSL context
@@ -530,7 +407,7 @@ void app_main(void){
                     "/spiffs/crypto/bike_srv.key",
                     "/spiffs/crypto/bike_srv.crt",
                     "/spiffs/crypto/ca.crt",
-                    "fb_steigtum_app_clt",
+                    EXPECTED_COMMON_NAME,
                     send_data, recv_data, &io);
 
     // Set up advertising
