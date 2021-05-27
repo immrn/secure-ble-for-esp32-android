@@ -146,6 +146,9 @@ void l2cap_coc_recv(uint16_t conn_handle, struct ble_l2cap_chan *chan, struct os
     static unsigned int sdu_count = 0;
 
     ESP_LOGI(L2CAP_TAG, "Received SDU #%d, chan: 0x%08x, data len %u", sdu_count++, (uint32_t) chan, OS_MBUF_PKTLEN(sdu));
+    // TODO DEBUG rm this later
+    TaskHandle_t curr_task = xTaskGetCurrentTaskHandle();
+	ESP_LOGI(L2CAP_TAG, "core id = %d, task handle = %p, task name = %s", xPortGetCoreID(), curr_task, pcTaskGetName(curr_task));
 
     conn = l2cap_conn_find(conn_handle);
     assert(conn != NULL);
@@ -154,18 +157,18 @@ void l2cap_coc_recv(uint16_t conn_handle, struct ble_l2cap_chan *chan, struct os
     assert(coc != NULL);
 
     if(sdu_queue_get(&sdu_queue_rx) == NULL){
-        ESP_LOGI(MBEDTLS_TAG, "Check if the recv_data() callback is looking for fresh data."); // TODO DEBUG remove
+        ESP_LOGI(L2CAP_TAG, "Check if the l2cap_io_recv_data() callback is waiting for fresh data."); // TODO DEBUG remove
         int semaphore_res = xSemaphoreTake(coc->want_data_semaphore, 0);
 
         res = sdu_queue_add(&sdu_queue_rx, sdu);
         assert(res == 0);
 
         if(semaphore_res == pdTRUE){
-            ESP_LOGI(MBEDTLS_TAG, "It was looking for fresh data."); // TODO DEBUG remove
-            // Signal the COC the arrival of data, because it asked for it in recv_data() from ssl_callbacks.c!
+            ESP_LOGI(L2CAP_TAG, "It was looking for fresh data."); // TODO DEBUG remove
+            // Signal the COC the arrival of data, because it asked for it in l2cap_io_recv_data() from app_l2cap_io_calls.c!
             xSemaphoreGive(coc->received_data_semaphore);
         }else{
-            ESP_LOGI(MBEDTLS_TAG, "It wasn't looking for fresh data."); // TODO DEBUG remove
+            ESP_LOGI(L2CAP_TAG, "It wasn't looking for fresh data."); // TODO DEBUG remove
         }
     }else{
         res = sdu_queue_add(&sdu_queue_rx, sdu);
@@ -187,7 +190,7 @@ void l2cap_coc_recv(uint16_t conn_handle, struct ble_l2cap_chan *chan, struct os
     sdu = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_rx, 0);
     assert(sdu != NULL);
 
-    // Signal the peer it is allowed to send data.
+    // Signal the peer that it may send data.
     res = ble_l2cap_recv_ready(chan, sdu);
     assert(res == 0);
 
@@ -332,14 +335,18 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
     printf("mempool free blocks: rx = %d, tx = %d\n", sdu_coc_mbuf_mempool_rx.mp_num_free, sdu_coc_mbuf_mempool_tx.mp_num_free);
     printf("Sending L2CAP packet #%d: connection = %d, COC = %d, len = %d\n", packet_count++, conn_handle, coc_idx, len);
 
+    // TODO DEBUG rm this later
+    TaskHandle_t curr_task = xTaskGetCurrentTaskHandle();
+	printf("core id = %d, task handle = %p, task name = %s\n", xPortGetCoreID(), curr_task, pcTaskGetName(curr_task));
+
     sdu_tx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool_tx, 0);
-    if (!sdu_tx) {
+    if(!sdu_tx){
         printf("ERROR: Unable to allocate mbuf!\n\n");
         return -1;
     }
 
     conn = l2cap_conn_find(conn_handle);
-    assert(conn != NULL);
+    assert(conn != NULL); // TODO: If peer is disconnected, this is NULL. Handle this case.
 
     coc = l2cap_coc_find_by_idx(conn, coc_idx);
     if(coc == NULL){
@@ -348,24 +355,27 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
     }
 
     int res = os_mbuf_append(sdu_tx, data, len);
-    if (res != 0) {
+    if(res != 0){
         os_mbuf_free_chain(sdu_tx);
         printf("ERROR: Unable to append data! (%i)\n\n", res);
         // NimBLE return code
         return res;
     }
 
-    // Send L2CAP packet. If host is busy (that's when the COC module is still stalled with data), wait for it using a semaphore, that is obtained when the COC runs the unstalled-event.
+    // Send the SDU. If the host is busy (that's when the
+    // CoC module is still stalled with data or it's waiting
+    // for the peers "receive ready"), wait for it using a
+    // semaphore, that is obtained when the COC runs the unstalled-event.
     int semaphore_res;
     do{
         res = ble_l2cap_send(coc->chan, sdu_tx);
         if(res == BLE_HS_EBUSY || res == BLE_HS_ESTALLED){
-            // Await for the COC becoming unstalled
+            // Await for the CoC becoming unstalled
             semaphore_res = xSemaphoreTake(coc->unstalled_semaphore, portMAX_DELAY);
             if(semaphore_res == pdTRUE){
                 printf("COC got unstalled.\n");
             }else{
-                printf("COC is probably still stalled. Timeout on semaphore.\n");
+                printf("Semaphore timeout: COC is still stalled. \n");
             }
         }
     }
@@ -373,7 +383,8 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
 
     if (res != 0) {
         if(res == BLE_HS_ESTALLED){
-            // Don't free the mbuf chain of sdu_tx here because it seems like it will be freed automatically when the COC is unstalling.
+            // Don't free the mbuf chain of sdu_tx here because it seems
+            // like it will be freed automatically when the CoC is unstalling.
             printf("COC is stalled\n");
         }else{
             os_mbuf_free_chain(sdu_tx);

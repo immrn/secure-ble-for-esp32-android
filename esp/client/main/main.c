@@ -16,11 +16,11 @@
 #include "app_gap.h"
 #include "app_misc.h"
 #include "app_l2cap.h"
-#include "ssl_ctx.h"
-#include "ssl_callbacks.h"
+#include "app_ssl_ctx.h"
+#include "app_l2cap_io_calls.h"
 #include "app_config.h"
 #include "subscription.h"
-
+#include "debug_l2cap.h"
 
 
 
@@ -288,7 +288,7 @@ int on_l2cap_event(struct ble_l2cap_event *event, void *arg){
 // NimBLE
 
 void on_host_contr_reset(int reason){
-    MODLOG_DFLT(ERROR, "Reseted host and controller; reason=%d\n", reason);
+    MODLOG_DFLT(ERROR, "Reset host and controller; reason=%d\n", reason);
 }
 
 void on_host_contr_sync(){
@@ -371,21 +371,44 @@ void app_main(void){
     nimble_port_init();
 
     // Initialize L2CAP RX memory pool
-    ret = os_mempool_init(&sdu_coc_mbuf_mempool_rx, L2CAP_COC_BUF_COUNT_RX, L2CAP_COC_MEM_BLOCK_SIZE, l2cap_sdu_coc_mem_rx, "l2cap_coc_sdu_rx_pool");
+    ret = os_mempool_init(  &sdu_coc_mbuf_mempool_rx,
+                            L2CAP_COC_BUF_COUNT_RX,
+                            L2CAP_COC_MEM_BLOCK_SIZE,
+                            l2cap_sdu_coc_mem_rx,
+                            "l2cap_coc_sdu_rx_pool");
     assert(ret == 0);
-    ret = os_mbuf_pool_init(&sdu_os_mbuf_pool_rx, &sdu_coc_mbuf_mempool_rx, L2CAP_COC_MEM_BLOCK_SIZE, L2CAP_COC_BUF_COUNT_RX);
+    ret = os_mbuf_pool_init(&sdu_os_mbuf_pool_rx,
+                            &sdu_coc_mbuf_mempool_rx,
+                            L2CAP_COC_MEM_BLOCK_SIZE,
+                            L2CAP_COC_BUF_COUNT_RX);
     assert(ret == 0);
-    // Initialize RX SDU queue to track the order of the SDUs/mbufs in the sdu_os_mbuf_pool_rx. Length = L2CAP_COC_BUF_COUNT_RX - 1, because one RX-Buffer must always be available to ble_l2cap_recv_ready() and can't be tracked.
+
+    // Initialize RX SDU queue to track the order of the
+    // SDUs/mbufs in the sdu_os_mbuf_pool_rx.
+    // Length = L2CAP_COC_BUF_COUNT_RX - 1, because one
+    // RX-Buffer must always be available to
+    // ble_l2cap_recv_ready() and can't be tracked.
     sdu_queue_init(&sdu_queue_rx, L2CAP_COC_BUF_COUNT_RX - 1);
 
     // Initialize L2CAP TX memory pool
-    ret = os_mempool_init(&sdu_coc_mbuf_mempool_tx, L2CAP_COC_BUF_COUNT_TX, L2CAP_COC_MEM_BLOCK_SIZE, l2cap_sdu_coc_mem_tx, "l2cap_coc_sdu_tx_pool");
+    ret = os_mempool_init(  &sdu_coc_mbuf_mempool_tx,
+                            L2CAP_COC_BUF_COUNT_TX,
+                            L2CAP_COC_MEM_BLOCK_SIZE,
+                            l2cap_sdu_coc_mem_tx,
+                            "l2cap_coc_sdu_tx_pool");
     assert(ret == 0);
-    ret = os_mbuf_pool_init(&sdu_os_mbuf_pool_tx, &sdu_coc_mbuf_mempool_tx, L2CAP_COC_MEM_BLOCK_SIZE, L2CAP_COC_BUF_COUNT_TX);
+    ret = os_mbuf_pool_init(&sdu_os_mbuf_pool_tx,
+                            &sdu_coc_mbuf_mempool_tx,
+                            L2CAP_COC_MEM_BLOCK_SIZE,
+                            L2CAP_COC_BUF_COUNT_TX);
     assert(ret == 0);
 
     // Initialize L2CAP connection memory pool
-    ret = os_mempool_init(&l2cap_coc_conn_pool, MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM), sizeof (struct l2cap_coc_node), l2cap_coc_conn_mem, "l2cap_coc_conn_pool");
+    ret = os_mempool_init(  &l2cap_coc_conn_pool,
+                            MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
+                            sizeof (struct l2cap_coc_node),
+                            l2cap_coc_conn_mem,
+                            "l2cap_coc_conn_pool");
     assert(ret == 0);
 
     // Initialize the NimBLE host configuration
@@ -393,6 +416,10 @@ void app_main(void){
     ble_hs_cfg.sync_cb = on_host_contr_sync;
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
     ble_hs_cfg.sm_sc = 0;
+
+    // Run the BLE host in it's own task.
+    // To run the BLE host in the current task,
+    // read the comment of esp_nimble_hci_and_controller_init().
     nimble_port_freertos_init(host_task_func);
 
     printf("mempool free blocks: rx = %d, tx = %d\n", sdu_coc_mbuf_mempool_rx.mp_num_free, sdu_coc_mbuf_mempool_tx.mp_num_free);
@@ -407,17 +434,19 @@ void app_main(void){
                     "/spiffs/crypto/app_clt.crt",
                     "/spiffs/crypto/ca.crt",
                     EXPECTED_COMMON_NAME,
-                    send_data, recv_data, &io);
+                    l2cap_io_send_data, l2cap_io_recv_data, &io);
 
     // Setup discovering
     memset(&disc_params, 0, sizeof(disc_params));
     disc_params.itvl = BLE_GAP_SCAN_FAST_INTERVAL_MAX;
     disc_params.window = BLE_GAP_SCAN_FAST_WINDOW;
     disc_params.filter_duplicates = 1;
+
     // Wait for host and controller getting synchronized
     while(!ble_hs_synced()){
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
+
     // Start discovering
     ret = ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_HS_FOREVER, &disc_params, on_gap_event, NULL);
     assert(ret == 0);
@@ -425,8 +454,15 @@ void app_main(void){
 #if MYNEWT_VAL(BLE_HS_DEBUG)
     printf("BLE DEBUG ENABLED\n");
 #endif
+    printf("Max CoC: %d\n", MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM));
+    printf("Mac BLE connections: %d\n", MYNEWT_VAL(BLE_MAX_CONNECTIONS));
 
-    test_mbedtls_1(&io, &ctx);
+    // Check heap
+    ESP_LOGI(HEAP_TAG, "Free bytes in (data memory) heap:\t\t%zu", heap_caps_get_free_size(MALLOC_CAP_8BIT));
+    ESP_LOGI(HEAP_TAG, "Largest free block in (data memory) heap:\t%zu", heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
+
+    // test_mbedtls_1(&io, &ctx);
+    test_l2cap_rx(&io);
 
     return;
 }

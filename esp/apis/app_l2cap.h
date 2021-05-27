@@ -1,3 +1,6 @@
+#ifndef _FILE_APP_L2CAP_H_
+#define _FILE_APP_L2CAP_H_
+
 #include <errno.h>
 #include "os/os_mbuf.h"
 #include "os/os_mempool.h"
@@ -107,3 +110,7 @@ int l2cap_send(uint16_t conn_handle, uint16_t coc_idx, const unsigned char* data
  *  @return         Returns number of bytes read.
  */
 size_t l2cap_read_rx_buffer(sdu_queue* queue, struct l2cap_coc_node* coc, unsigned char* data, size_t len);
+
+
+
+#endif /* !_FILE_APP_L2CAP_H_ */

@@ -1,5 +1,5 @@
-#ifndef ___SSL_CTX_H___
-#define ___SSL_CTX_H___
+#ifndef _FILE_APP_SSL_CTX_H_
+#define _FILE_APP_SSL_CTX_H_
 
 #include "mbedtls/config.h"
 #include "mbedtls/ctr_drbg.h"
@@ -10,13 +10,14 @@
 #include "mbedtls/ssl.h"
 #include "mbedtls/x509.h"
 
-#include "app_config.h"
+
 
 // The transport layer has been closed upon a read.
 #define SSL_CTX_TRANSPORT_CLOSED 1
 
-typedef struct __ssl_ctx__
-{
+
+
+typedef struct __ssl_ctx__ {
 	// A source of entropy (= random stuff)
 	mbedtls_entropy_context entropy;
 
@@ -39,10 +40,9 @@ typedef struct __ssl_ctx__
 	mbedtls_ssl_context ssl;
 } ssl_ctx;
 
-/* 
- *	@brief Create a new SSL context with the given parameters.
+/*	@brief Create a new SSL context with the given parameters.
  *
- * 	@param endpoint_role		use MBEDTLS_SSL_IS_SERVER or MBEDTLS_SSL_IS_CLIENT
+ *	@param endpoint_role		use MBEDTLS_SSL_IS_SERVER or MBEDTLS_SSL_IS_CLIENT
  */
 void ssl_ctx_create(
 	ssl_ctx* ctx,
@@ -87,4 +87,6 @@ int ssl_ctx_recv(ssl_ctx* ctx, unsigned char* data, size_t len);
 // Close the connection.
 void ssl_ctx_close_connection(ssl_ctx* ctx);
 
-#endif
+
+
+#endif /* _FILE_APP_SSL_CTX_H_ */

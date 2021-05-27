@@ -2,10 +2,11 @@ set(srcs "main.c"
         "../../apis/app_gap.c"
         "../../apis/app_l2cap.c"
         "../../apis/app_misc.c"
-        "../../apis/ssl_ctx.c"
-        "../../apis/ssl_callbacks.c"
+        "../../apis/app_ssl_ctx.c"
+        "../../apis/app_l2cap_io_calls.c"
         "../../apis/sdu_queue.c"
-        "../../apis/subscription.c")
+        "../../apis/subscription.c"
+        "../../apis/debug_l2cap.c")
 
 idf_component_register(SRCS "${srcs}" 
                     INCLUDE_DIRS "." "../../apis")

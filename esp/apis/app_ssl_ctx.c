@@ -1,7 +1,11 @@
-#include "ssl_ctx.h"
+#include "app_ssl_ctx.h"
 
 #include <stdlib.h>
 #include <string.h>
+
+#include "app_config.h"
+
+
 
 // This blob is used as the initial entropy source for the RNG.
 #define RNG_PERSONALITY "fb_steigtum"
@@ -13,10 +17,10 @@ static void debug_callback(void* opaque_ctx, int level, const char* file_name, i
 }
 #endif
 
-static void fail_on_error(int err, const char* tag)
-{
-	if (err != 0)
-	{
+
+
+static void fail_on_error(int err, const char* tag){
+	if(err != 0){
 		printf("[mbedtls_error] (%s) %s", tag, ssl_ctx_error_msg(err));
 		exit(-1);
 	}
@@ -129,8 +133,7 @@ void ssl_ctx_destroy(ssl_ctx* ctx){
 }
 
 const char* ssl_ctx_error_msg(int err){
-	if (!err)
-	{
+	if(!err){
 		return "Success";
 	}
 
@@ -145,8 +148,7 @@ int ssl_ctx_perform_handshake(ssl_ctx* ctx){
 	int err = mbedtls_ssl_handshake(&ctx->ssl);
 
 	// If an error has occurred, reset the context.
-	if (err)
-	{
+	if(err){
 		mbedtls_ssl_session_reset(&ctx->ssl);
 	}
 
@@ -157,13 +159,11 @@ int ssl_ctx_perform_handshake(ssl_ctx* ctx){
 int ssl_ctx_send(ssl_ctx* ctx, const unsigned char* data, size_t len){
 	size_t bytes_written = 0;
 
-	while (len > 0)
-	{
+	while(len > 0){
 		int result = mbedtls_ssl_write(&ctx->ssl, &data[bytes_written], len);
 
 		// If the result is negative, it indicates an error.
-		if (result < 0)
-		{
+		if(result < 0){
 			// Reset the context and return the error back to the caller.
 			mbedtls_ssl_session_reset(&ctx->ssl);
 			return result;
@@ -180,21 +180,18 @@ int ssl_ctx_send(ssl_ctx* ctx, const unsigned char* data, size_t len){
 int ssl_ctx_recv(ssl_ctx* ctx, unsigned char* data, size_t len){
 	size_t bytes_read = 0;
 
-	while (len > 0)
-	{
+	while(len > 0){
 		int result = mbedtls_ssl_read(&ctx->ssl, &data[bytes_read], len);
 
 		// If the result is negative, it indicates an error.
-		if (result < 0)
-		{
+		if(result < 0){
 			// Reset the context and return the error back to the caller.
 			mbedtls_ssl_session_reset(&ctx->ssl);
 			return result;
 		}
 
 		// If the result is 0, the transport layer has been closed.
-		if (result == 0)
-		{
+		if(result == 0){
 			// Reset the context and return the info back to the caller.
 			mbedtls_ssl_session_reset(&ctx->ssl);
 			return SSL_CTX_TRANSPORT_CLOSED;

@@ -1,3 +1,6 @@
+#ifndef _FILE_APP_GAP_H_
+#define _FILE_APP_GAP_H_
+
 #include <stdint.h>
 #include "esp_nimble_hci.h"
 #include "host/ble_hs.h"
@@ -16,3 +19,7 @@ void print_adv_fields(const struct ble_hs_adv_fields *fields);
 void decode_adv_data(const uint8_t *adv_data, uint8_t adv_data_len, void *arg);
 
 int on_gap_event(struct ble_gap_event *event, void *arg);
+
+
+
+#endif /* !_FILE_APP_GAP_H_ */

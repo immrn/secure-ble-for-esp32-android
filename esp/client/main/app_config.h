@@ -11,7 +11,7 @@
 /*** Debugging ***/
 
 // Enables(1)/disables(0) the printing of the SDU queue.
-#define DEBUG_APP 0
+#define DEBUG_APP 1
 
 // If this is defined, mbedtls prints debug messages to stdout.
 // #define SSL_CTX_DEBUG

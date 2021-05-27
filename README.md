@@ -160,7 +160,7 @@ Because this ESP32 contains a dual core processor FreeRTOS-Tasks are either pinn
 #### Configuration
 In `esp/server/` and `esp/client/` the following configurations are done already.
 - **required for mbedtls debugging**
-	- in `esp/apis/ssl_ctx.h` set line 5 to `#define SSL_CTX_DEBUG` <!-- TODO Maybe adjust location and line -->
+	- in `esp/apis/app_ssl_ctx.h` set line 5 to `#define SSL_CTX_DEBUG` <!-- TODO Maybe adjust location and line -->
 	- in a ESP-IDF-Project like `esp/server/` or `esp/client/` run `idf.py menuconfig` and adjust the following values:
 		- _Component config_ ->
 			- _mbedTLS_ -> _Enable mbedTLS debugging_ -> set true = (*)

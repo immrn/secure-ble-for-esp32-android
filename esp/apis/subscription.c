@@ -369,7 +369,8 @@ void test_mbedtls_1(io_ctx* io, ssl_ctx* ctx){
 		ESP_LOGI(MBEDTLS_TAG, "----- TLS Handshake successful -----\n");
 
 		sdu_queue_print(&sdu_queue_rx);
-		vTaskDelay(5000 / portTICK_PERIOD_MS);
+		vTaskDelay(3000 / portTICK_PERIOD_MS);
+		sdu_queue_print(&sdu_queue_rx);
 
 		printf("----- Starting subscription exchange -----\n");
 

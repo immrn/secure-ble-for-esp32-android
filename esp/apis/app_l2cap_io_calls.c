@@ -1,4 +1,4 @@
-#include "ssl_callbacks.h"
+#include "app_l2cap_io_calls.h"
 
 #include <stdio.h>
 
@@ -9,7 +9,7 @@
 #include "freertos/task.h"
 #include "mbedtls/ssl.h"
 
-#include "io_ctx.h"
+#include "app_io_ctx.h"
 #include "app_l2cap.h"
 #include "app_config.h"
 
@@ -17,7 +17,7 @@
 
 // Callbacks for mbedtls
 
-int send_data(void* ctx, const unsigned char* data, size_t len){
+int l2cap_io_send_data(void* ctx, const unsigned char* data, size_t len){
     int res;
     uint16_t compatible_len;
     io_ctx* io = ctx;
@@ -29,29 +29,35 @@ int send_data(void* ctx, const unsigned char* data, size_t len){
         compatible_len = (uint16_t)len;
     }
 
-    // Try to send. (l2cap_send blocks)
-    ESP_LOGI(MBEDTLS_TAG, "Want to send %d bytes!", compatible_len);
-	ESP_LOGI(MBEDTLS_TAG, "core id = %d, task handle = %p", xPortGetCoreID(), xTaskGetCurrentTaskHandle());
+    ESP_LOGI(L2CAP_TAG, "Want to send %d bytes!", compatible_len);
+    // TODO DEBUG rm this later
+    TaskHandle_t curr_task = xTaskGetCurrentTaskHandle();
+	ESP_LOGI(L2CAP_TAG, "core id = %d, task handle = %p, task name = %s\n", xPortGetCoreID(), curr_task, pcTaskGetName(curr_task));
+
+    // Try to send. (l2cap_send is blocking)
     res = l2cap_send(io->conn->handle, io->coc_idx, data, compatible_len);
 
     // If sending was successful, return the bytes that were sent.
     if(res == 0 || res == BLE_HS_ESTALLED){
-		return compatible_len;
+        return compatible_len;
     }
 
     // Sending failed.
-    ESP_LOGE(MBEDTLS_TAG, "Sending failed!");
+    ESP_LOGE(L2CAP_TAG, "Sending failed!");
     return -1;
 }
 
-int recv_data(void* ctx, unsigned char* data, size_t len, uint32_t timeout_msec){
+int l2cap_io_recv_data(void* ctx, unsigned char* data, size_t len, uint32_t timeout_msec){
     int res;
     io_ctx* io = ctx;
     struct os_mbuf* sdu;
     struct l2cap_coc_node* coc;
 
-    ESP_LOGI(MBEDTLS_TAG, "Want to read/recv %u bytes!", len);
-	ESP_LOGI(MBEDTLS_TAG, "core id = %d, task handle = %p", xPortGetCoreID(), xTaskGetCurrentTaskHandle());
+    ESP_LOGI(L2CAP_TAG, "Want to read/recv %u bytes!", len);
+	// TODO DEBUG rm this later
+    TaskHandle_t curr_task = xTaskGetCurrentTaskHandle();
+	ESP_LOGI(L2CAP_TAG, "core id = %d, task handle = %p, task name = %s", xPortGetCoreID(), curr_task, pcTaskGetName(curr_task));
+
     sdu_queue_print(&sdu_queue_rx);
 
 	// Get the current COC.
@@ -66,32 +72,32 @@ int recv_data(void* ctx, unsigned char* data, size_t len, uint32_t timeout_msec)
 
         // Make the timeout value compatible for the upcoming semaphore.
         if(timeout_msec == 0){
-            ESP_LOGI(MBEDTLS_TAG, "Set receive timeout to infinite.");
+            ESP_LOGI(L2CAP_TAG, "Set receive timeout to infinite.");
             timeout_msec = portMAX_DELAY;
         }else{
             timeout_msec = timeout_msec / portTICK_PERIOD_MS;
         }
 
         // Await the incoming data.
-        ESP_LOGI(MBEDTLS_TAG, "Waiting for L2CAP to receive a SDU...");
+        ESP_LOGI(L2CAP_TAG, "Waiting for next incoming SDU...");
 		xSemaphoreGive(coc->want_data_semaphore);
         res = xSemaphoreTake(coc->received_data_semaphore, timeout_msec);
         if(res != pdTRUE){
             // Semaphore wasn't obtained.
-			ESP_LOGI(MBEDTLS_TAG, "Timeout: Didn't receive a SDU.");
+			ESP_LOGI(L2CAP_TAG, "Timeout: Didn't receive a SDU.");
             return MBEDTLS_ERR_SSL_TIMEOUT;
         }
-		ESP_LOGI(MBEDTLS_TAG, "Received a SDU.");
+		ESP_LOGI(L2CAP_TAG, "Received a SDU.");
 
         // Received the semaphore. The SDU was added to sdu_os_mbuf_pool_rx
         // and as reference to sdu_queue_rx by l2cap_coc_recv().
     }
 
     // Read the RX Buffer and free resources of the buffer if possible.
-	ESP_LOGI(MBEDTLS_TAG, "Reading from buffer...");
+	ESP_LOGI(L2CAP_TAG, "Reading from buffer...");
 	res = l2cap_read_rx_buffer(&sdu_queue_rx, coc, data, len);
 
-	ESP_LOGI(MBEDTLS_TAG, "Did read %d bytes from buffer.", res);
+	ESP_LOGI(L2CAP_TAG, "Did read %d bytes from buffer.", res);
 	sdu_queue_print(&sdu_queue_rx);
 	printf("\n");
 
