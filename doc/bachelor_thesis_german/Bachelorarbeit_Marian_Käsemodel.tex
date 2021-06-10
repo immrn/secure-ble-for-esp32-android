@@ -1,0 +1,156 @@
+\documentclass[doktyp=barbeit]{TUBAFarbeiten}
+
+\usepackage{selinput}% Auswahl der Dateikodierung (ansi,latin1,utf8,...)
+	\SelectInputMappings{adieresis={ä},germandbls={ß},Euro={€}}% Zeichenzuordnung für selinput.sty
+\usepackage[T1]{fontenc}% Einstellung Fontencoding
+
+\usepackage{csquotes}% Einstellung zu Anführungszeichen; wird von biblatex.sty gefordert
+\usepackage[backend=biber,sortlocale=de_DE_phonebook]{biblatex}% bessere Literaturverarbeitung
+\addbibresource{tubafarbeiten-beispiel.bib}% welche Literaturdatenbank genutzt werden soll; Endung nicht vergessen!
+
+%\usepackage{setspace}% Einstellungen Zeilenabstand
+	%\onehalfspacing% Einstellungen Zeilenabstand
+
+\setcounter{secnumdepth}{4}
+% \setcounter{tocdepth}{4}
+
+\TUBAFFakultaet{Fakultät für Mathematik und Informatik}
+\TUBAFInstitut{Institut für Informatik}
+\TUBAFLehrstuhl{Lehrstuhl für Betriebssysteme und Kommunikationstechnologien}
+
+%\TUBAFZweitlogo{\includegraphics{thekla_logo.jpg}}
+
+\TUBAFTitel[Entwicklung einer Sicherheitsinfrastruktur zur Bluetooth-Kommunikation zwischen Smartphone und Mikrocontroller]{Entwicklung einer Sicherheitsinfrastruktur zur Bluetooth-Kommunikation zwischen Smartphone und Mikrocontroller}
+\TUBAFBetreuer{\,Prof.\,Dr. Konrad Froitzheim}
+\TUBAFKorrektor{M.Sc. Jonas Treumer}%TODO Betreuer Lorenzo Neumann
+\TUBAFAutor[M. Käsemodel]{Marian Käsemodel}
+\TUBAFStudiengang{Angewandte Informatik}
+\TUBAFVertiefung{Technik}
+\TUBAFMatrikel{62\,412}
+\TUBAFDatum[]{\today}%TODO
+
+\begin{document}
+
+\maketitle
+
+\TUBAFErklaerungsseite
+
+
+\KOMAoptions{
+	listof=totoc	% Abbildungs- und Tabellenverzeichnis im Inhaltsverzeichnis
+}
+
+\tableofcontents
+\newpage
+\listoffigures
+\listoftables
+
+\newpage
+\section{Einleitung}
+
+	\subsection{Themenstellung}
+		\input{sections/einleitung/themenstellung.tex}
+
+	\subsection{Problemstellung}
+		\input{sections/einleitung/problemstellung.tex}
+
+\newpage
+\section{Grundlagen zu Bluetooth Low Energy}
+
+	\subsection{Überblick}
+		\input{sections/grundlagen_ble/ueberblick.tex}
+
+	\subsection{Topologie}
+		\input{sections/grundlagen_ble/topologie.tex}
+
+	\subsection{Controller}
+		\input{sections/grundlagen_ble/controller/controller_allgemein.tex}
+
+		\subsubsection{Physical Layer}
+
+			\paragraph{Physical Channel} \mbox{} \vspace{0.2cm} \\
+				\input{sections/grundlagen_ble/controller/physical_layer/physical_channel.tex}
+
+			\paragraph{Physical Link} \mbox{} \vspace{0.2cm} \\
+				\input{sections/grundlagen_ble/controller/physical_layer/physical_link.tex}
+
+		\subsubsection{Link Layer}
+			\input{sections/grundlagen_ble/controller/link_layer/link_layer_allgemein.tex}
+
+			\paragraph{Logical Transport} \mbox{} \vspace{0.2cm} \\
+				\input{sections/grundlagen_ble/controller/link_layer/logical_transport.tex}
+
+			\paragraph{Logical Link} \mbox{} \vspace{0.2cm} \\
+				\input{sections/grundlagen_ble/controller/link_layer/logical_link.tex}
+
+	\subsection{Host}
+		\input{sections/grundlagen_ble/host/host_allgemein.tex}
+
+		\subsubsection{Logical Link Control and Adaption Protocol}
+			\input{sections/grundlagen_ble/host/l2cap.tex}
+
+		\subsubsection{Generic Attribute Profile}
+			\input{sections/grundlagen_ble/host/gatt.tex}
+
+		\subsubsection{Generic Access Profile}
+			\input{sections/grundlagen_ble/host/gap.tex}
+
+		\subsubsection{Security Manager Protocol}
+			\input{sections/grundlagen_ble/host/smp.tex}
+
+	\subsection{Verbindungsaufbau / Pairing}
+
+	\subsection{Sicherheitslücken}
+
+\newpage
+\section{Grundlagen zu Transport Layer Security}
+
+	\subsection{Zertifikate}
+
+	\subsection{Algorithmen}
+
+	\subsection{Protokoll}
+
+	\subsection{Sicherheit}
+
+\newpage
+\section{Infrastruktur}
+
+	\subsection{Ziel der Infrastruktur}
+		\input{sections/infrastruktur/ziel.tex}
+
+	\subsection{Topologie}
+
+	\subsection{Transport}
+
+	\subsection{Sicherheit}
+
+	\subsection{Verbindungsaufbau}
+
+\newpage
+\section{Implementierung}
+
+	\subsection{Ziel der Implementierung}
+
+	\subsection{Topologie}
+
+	\subsection{Hardware und Software}
+
+	\subsection{Transport und Sicherheit}
+
+	\subsection{Ausleihprozess}
+
+		\subsubsection{Verbindungsaufbau}
+
+		\subsubsection{Beenden des Ausleihprozesses}
+
+\newpage
+\section{Ausblick}
+
+\newpage
+\section{Zusammenfassung}
+
+\newpage
+\printbibliography[heading=bibintoc]
+
+\end{document}

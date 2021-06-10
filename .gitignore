@@ -1,4 +1,4 @@
-#ESP
+# ESP
 esp/server/build/**
 esp/server/spiffs_image/**/*.key
 esp/server/spiffs_image/**/*.crt
@@ -7,20 +7,23 @@ esp/client/build/**
 esp/client/spiffs_image/**/*.key
 esp/client/spiffs_image/**/*.crt
 
-#Editors
+# Editors
 .vscode
 
-#Certificates and keys
+# Certificates and keys
 certs/**
 
-#tex misc
-doc/bachelor_thesis_german/*.aux
-doc/bachelor_thesis_german/*.bcf
-doc/bachelor_thesis_german/*.lof
-doc/bachelor_thesis_german/*.log
-doc/bachelor_thesis_german/*.lot
-doc/bachelor_thesis_german/*.xml
-doc/bachelor_thesis_german/*.toc
+# Tex misc
+doc/bachelor_thesis_german/**/*.aux
+doc/bachelor_thesis_german/**/*.bcf
+doc/bachelor_thesis_german/**/*.lof
+doc/bachelor_thesis_german/**/*.log
+doc/bachelor_thesis_german/**/*.lot
+doc/bachelor_thesis_german/**/*.xml
+doc/bachelor_thesis_german/**/*.toc
 
-#private files
+# PDF files
+doc/bachelor_thesis_german/Bachelorarbeit_Marian_Käsemodel.pdf
+
+# Private files
 todo.md
