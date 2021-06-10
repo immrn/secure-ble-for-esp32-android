@@ -52,26 +52,29 @@ int debug_l2cap_recv(io_ctx* io, unsigned char* data, size_t len){
 	return 0;
 }
 
-static int m_len = 6;
+static int message_len = 6;
+static int packet_count = 5;
 
 int test_l2cap_tx(io_ctx* io){
-	printf("test_plain_l2cap_server\n");
+	printf("Test L2CAP transmission.\n");
 
     // Await L2CAP connection.
     while(l2cap_conns[0].coc_list.slh_first == NULL ){
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
+
+	// Set I/O context.
     io->conn = &l2cap_conns[0];
     io->coc_idx = 0;
 
     // Create message.
-    char* message = (char*)malloc(sizeof(char) * m_len);
+    char* message = (char*)malloc(sizeof(char) * message_len);
 	assert(message != NULL);
-
     strcpy(message, "Hello!");
 
-	for(int i = 0; i < 7; i++){
-		debug_l2cap_send(io, (const unsigned char*) message, m_len);
+	// Send message(s).
+	for(int i = 0; i < packet_count; i++){
+		debug_l2cap_send(io, (const unsigned char*) message, message_len);
 	}
 
 	free(message);
@@ -84,15 +87,16 @@ int test_l2cap_rx(io_ctx* io){
     while(l2cap_conns[0].coc_list.slh_first == NULL ){
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
+
     io->conn = &l2cap_conns[0];
     io->coc_idx = 0;
 
 	vTaskDelay(3000 / portTICK_PERIOD_MS);
 
-	char* message_buf = malloc(sizeof(char) * m_len);
-	for(int i = 0; i < 7; i++){
-		debug_l2cap_recv(io, (unsigned char*) message_buf, m_len);
-		for(int j = 0; j < m_len; j++){
+	char* message_buf = malloc(sizeof(char) * message_len);
+	for(int i = 0; i < packet_count; i++){
+		debug_l2cap_recv(io, (unsigned char*) message_buf, message_len);
+		for(int j = 0; j < message_len; j++){
 			printf("%c", message_buf[j]);
 		}
 		printf("\n");
