@@ -1,6 +1,7 @@
 Bluetooth ist ein Industriestandard für die Übertragung von Daten per Funk, dessen Intention die Reduzierung von Kabelverbindungen an mobilen sowie stationären Geräten war. Wichtige Eigenschaften der Technologie sind vor allem ein niedriger Energieverbrauch und niedrige Herstellungskosten der Hardware. Seit 1998 wird Bluetooth von der Bluetooth Special Interest Group (SIG) entwickelt und ist seit 2002 von der Organisation Institute of Electrical and Electronics Engineers (IEEE) standarisiert.
 %TODO QUELLE https://standards.ieee.org/standard/802_15_1-2002.html)
-Es agiert im lizenzfreien ISM-Band (Industrial, Scientific and Medical Band) von 2,4 GHz.
+
+Es agiert im lizenzfreien ISM-Band (Industrial, Scientific and Medical Band) von 2,4 GHz, 
 % TODO QUELLE
 % BR/EDR: BT Specification 4.0 PDF S. 124, 1.1 Overview of BR/EDR Operation, 1. Absatz
 % LE: BT Specifiaction 4.0 PDF S. 126, 1.2 OVERVIEW OF BLUETOOTH LOW ENERGY OPERATION, 1. Absatz
@@ -28,7 +29,7 @@ Grundlegend unterscheidet sich Bluetooth seit der Version 4.0 von 2010 in die zw
 
 Die beiden Systeme BR und LE sind bezüglich der Kommunikation miteinander inkompatibel. D.h. implementiert ein Gerät nur das BR-System, kann es keine Daten mit einem Gerät austauschen, das nur das LE-System unterstützt. Desweiteren ist es möglich, dass ein Gerät über beide Systeme verfügt und so die meisten Nutzungsfälle abdeckt.
 \\\\
-Da Bluetooth Low Energy (BLE) ein zentraler Bestandteil dieser Arbeit ist, bezieht sich der Autor von nun an nur auf dieses und nicht mehr auf Bluetooth im Allgemeinen. D.h., dass Bluetooth Classic, welches BR/EDR und AMP beschreibt, nur noch behandelt wird, wenn das BR-System oder eine seiner Erweiterungen explizit erwähnt werden.
+\textit{Da Bluetooth Low Energy (BLE) ein zentraler Bestandteil dieser Arbeit ist, bezieht sich der Autor von nun an nur auf dieses und nicht mehr auf Bluetooth im Allgemeinen. D.h., dass Bluetooth Classic, welches BR/EDR und AMP beschreibt, nur noch behandelt wird, wenn das BR-System oder eine seiner Erweiterungen explizit erwähnt werden.}
 \\\\
 Die Architektur eines Bluetooth-Systems unterteilt sich in einen Host und in einen oder mehrere Controller. Ein Host ist eine logische Entität, definiert als alle Schichten unterhalb der nicht zu Bluetooth gehörigen Profile (Protokolle) und oberhalb des Host-Controller-Interface (HCI). Ein Controller ist eine logische Entität, definiert als alle Schichten bzw. Funktionsblöcke unterhalb des HCI. Der Aufbau setzt sich immer aus genau einem primären Controller und optional aus sekundären Controllern zusammen. Dabei kann die Rolle des primären Controllers entweder durch einen BR/EDR-Controller, einen LE-Controller oder durch eine Kombination aus BR/EDR- und LE-Controller eingenommen werden, während die Rolle eines sekundären Controllers nur durch einen AMP-Controller besetzt werden kann. In Abbildung X
 % TODO BILD VERWEIS

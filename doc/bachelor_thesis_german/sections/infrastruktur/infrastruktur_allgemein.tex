@@ -1,0 +1,16 @@
+Die Infrastruktur beschreibt eine allgemeine Lösung, um eine sichere Kommunikation mittels Bluetooth Low Energy zu gewährleisten. Bis auf den Fakt, dass ein Mikrocontroller und ein Smartphone miteinander kommunizieren, sind die Systeme der beiden Kommunikationsparteien nicht von Relevanz. Dabei ist die Lösung auf weitere Konstellationen der Systeme anwendbar, solang jedes System über ein Bluetooth-Modul (mind. der Bluetooth-Version 4.0) verfügt und eine Software-Bibliothek für Transport Layer Security (TLS) der Version 1.2 oder höher unterstützt. Somit ist die Infrastruktur unabhängig von dem in der Einleitung beschriebenen Projekt SteigtUM.
+\\\\
+Obwohl die Sicherheit in der Datenübertragung keine allumfassende Definition besitzt, lassen sich für diese trotzdem essenzielle Aspekte formulieren. Nach X 
+% TODO QUELLE S. 19 https://books.google.de/books?id=-fciBAAAQBAJ&lpg=PA2&ots=YPh7AK5_WJ&dq=sichere%20Daten%C3%BCbertragung&lr&pg=PA19#v=onepage&q&f=false
+sind diese Vertraulichkeit, Datenintegrität und Authentzität.
+
+Vertraulichkeit bedeutet, dass "Übertragene Daten [...] nur berechtigten Instanzen zugänglich sein [sollen], d.h. keine unbefugte dritte Partei soll an den Inhalt von übertragenen Nachrichten gelangen können".
+% TODO QUELLE ZITAT kapitel 2.6 Sicherheitsziele in Netzwerken S. 19 https://books.google.de/books?id=-fciBAAAQBAJ&lpg=PA2&ots=YPh7AK5_WJ&dq=sichere%20Daten%C3%BCbertragung&lr&pg=PA19#v=onepage&q&f=false
+
+Die Datenintegrität trägt folgende Bedeutung. "Für den Empfänger muss eindeutig erkennbar sein, ob Daten während ihrer Übertragung unbefugt geändert wurden".
+% TODO QUELLE ZITAT kapitel 2.6 Sicherheitsziele in Netzwerken S. 19 https://books.google.de/books?id=-fciBAAAQBAJ&lpg=PA2&ots=YPh7AK5_WJ&dq=sichere%20Daten%C3%BCbertragung&lr&pg=PA19#v=onepage&q&f=false
+
+Authentizität teilt sich in zwei Punkte auf. Zum einen soll "Eine Instanz [...] einer an deren ihre Identität zweifelsfrei nachweisen können (Identitätsnachweis bzw. Authentifizierung der Instanz)". 
+% TODO QUELLE ZITAT kapitel 2.6 Sicherheitsziele in Netzwerken S. 19 https://books.google.de/books?id=-fciBAAAQBAJ&lpg=PA2&ots=YPh7AK5_WJ&dq=sichere%20Daten%C3%BCbertragung&lr&pg=PA19#v=onepage&q&f=false
+Zum anderen "soll überprüft werden können, ob eine Nachricht von einer bestimmten Instanz stammt (Authentizität der Daten)".
+% TODO QUELLE ZITAT kapitel 2.6 Sicherheitsziele in Netzwerken S. 19 https://books.google.de/books?id=-fciBAAAQBAJ&lpg=PA2&ots=YPh7AK5_WJ&dq=sichere%20Daten%C3%BCbertragung&lr&pg=PA19#v=onepage&q&f=false
