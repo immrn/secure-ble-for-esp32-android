@@ -1,3 +1,59 @@
 -Grob "was ist l2cap" mit einordnung host
 -funktionen
--geeignetes Transport protokoll?
+
+- QoS mit Konfiguration möglich, mapped channel ACL-U logical Link oder LE-U
+- unterstützt verbindunsorientierte Channel
+- neben Aufbau, Konfiugration und Abbau von L2CAP-Channels, ist L2CAP für das Multiplexing der Service Data Units (SDU) auf ACL-U, LE-U zuständig
+- pro channel flusskontrolle (muss bei channel aufbau eingestellt werden)
+- enhanced error detection and retransmission
+- bei HCI muss L2CAP die SDUs in Fragmente segmentieren, die in Basebandbuffers passen, und eine Token-basierende Flusskontrolle über das HCI ausführen, um Fragmente nur an das Baseband zu übertragen, wenn es erlaubt ist
+
+Das Logical Link Control and Adaption Protocol (L2CAP) bildet die unterste Schicht im Host (siehe Abb. X) 
+% TODO BILD VERWEIS host stack aufbau im überblick
+und dient je nach Konfiguration dazu, um den Datenverkehr zu steuern und um zwischen höheren und niedrigeren Schichten zu vermitteln.
+% TODO QUELLE Spec 4.0 S. 1400 2.3 Operation Between Layers
+Es verfügt über fünf Modi:
+\begin{itemize}
+    \item Basic L2CAP Mode
+    \item Flow Control Mode
+    \item Retransmission Mode
+    \item Enhanced Retransmission Mode
+    \item Streaming Mode
+    \item LE Credit Based Flow Control Mode (seit Bluetooth 4.2)
+\end{itemize}
+Für Bluetooth allgemein (BR/EDR und LE) wird immer der Basic L2CAP Mode genutzt, wenn kein anderer festgelegt wird. X behauptet, dass der LE Credit Based Flow Control Mode als einziger Modus für verbindungsorientierte LE-Kanäle genutzt werden soll ("This is the only mode that shall be used for LE L2CAP connection oriented channels"X). Da diese Aussage nicht ausschließt, dass eine verbindungsorientierte LE-Verbindung über den standardmäßig festgelegten Basic L2CAP Mode erfolgen kann, und der LE Credit Based Flow Control Mode noch nicht in der Bluetooth-Version 4.0 vertreten war Y, ist anzunehmen, dass eine verbindungsorientierte LE-Verbindung auch mit dem Basic L2CAP Mode möglich ist.
+% TODO QUELLE ZITAT Spec. 4.2 S. 1734
+% TODO Y QUELLE Spec 4.0 S. 1401
+
+Logische Kanäle, genannt L2CAP Channels, dienen innerhalb eines Geräts als Endpunkt für höher gelegene Protokolle oder direkt für die Anwendung und sind für jedes Gerät individuell an dem Channel Identifier (CID) unterscheidbar. D.h. der L2CAP Channel einer Verbindung zwischen zwei Geräten muss von diesen nicht zwingend mit der gleichen CID gekennzeichnet sein. Einige CIDs sind bestimmten Zwecken zugeteilt (siehe Anhang X).
+% TODO ANHANG VERWEIS und ANHANG EINTRAG Tabelle aus Spec. 4.2 S. 1731 Table 2.2
+% TODO QUELLE Spec. 4.0 S. 1390
+\\\\
+% TODO BILD + VERWEIS l2cap layer resource manager channel manager spec 4.0 S. 1391
+Der L2CAP Layer wird von zwei Modulen gesteuert: dem Resource Manager und dem Channel Manager (siehe Abb. X).
+\\\\
+Der Channel Manager ist in Bezug auf L2CAP zuständig für die Signalübertragung intern, Peer-to-Peer, und zu höheren und niedrigeren Schichten.
+% TODO QUELLE Spec. 4.0 S. 1390
+Die Signale, die zwischen zwei L2CAP-Entitäten zweier verbundenen Geräte übertragen werden, sind Kommandos wie bspw. die LE Credit Based Connection Request und die entsprechende Response (siehe Anhang Tabelle X). 
+% TODO ANHANG VERWEIS + EINTRAG Spec 4.2 S. 1750 f. Table 4.2
+Dafür wird ein separater L2CAP Channel mit der CID 0x0005 genutzt. Zudem betreibt der Channel Manager den L2CAP-Zustandsautomaten, auf den hier nicht näher eingegangen werden soll.
+\\\\
+Da der L2CAP Layer nach unten durch das HCI mit dem Link Layer verknüpft ist, müssen die L2CAP PDUs dem Paketformat des HCI und dieses dem Paketformat des Link Layers gerecht werden. Dementsprechend werden die L2CAP PDUs fragmentiert bzw. wieder zusammengesetzt.
+% TODO BILD + VERWEIS Spec 4.0 S. 1487, Mischung aus Figure 7.1 und 7.2, vereinfacht darstellen: L2CAP PDU -> HCI Paket -> Link Layer Paket
+% TODO QUELLE Spec 4.0 S. 1486-1488
+\\\\
+Der Resource Manager übernimmt mehrere Aufgaben. Dazu zählt die Kapselung der Service Data Units (SDU)
+
+
+
+
+
+
+Der Resource Manager ist zuständig für den Frame Relay Service, die Segmentierung bzw. Zusammensetzung der Service Data Units (SDU), die erneute Übertragung und Flusskontrolle, sowie die Kapselung bzw. Entkapselung.
+% TODO QUELLE Spec. 4.0 S. 1390
+\\\\
+Eine Besonderheit des L2CAP ist das Protokoll- und das Kanalmultiplexverfahren. Bei Ersterem wird während des Erstellens eines L2CAP Channel die Verbindung zum zugehörigen höhergelegenen Protokoll geleitet. Zweiteres wird genutzt, um bei der Datenübertragung zwischen mehreren höhergelegenen Entitäten zu differenzieren, da mehrere dieser Entitäten das gleiche Protokoll nutzen könnten.
+% TODO QUELLE Spec. 4.0 S. 1391
+\\\\
+An diesen L2CAP Channels lässt sich das Multiplexverfahren über einen oder mehrere Logical Links anwenden. Dabei ist die Art des verwendeten Controllers nicht zwingend ein LE Controller, da L2CAP auch kompatibel mit dem BR/EDR Controller oder einer Kombination aus BR/EDR und LE ist.
+% TODO QUELLE Spec. 4.0 S. 1390 - 1391

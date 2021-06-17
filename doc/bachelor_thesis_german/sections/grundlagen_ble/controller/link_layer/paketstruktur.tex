@@ -16,7 +16,7 @@ Die Protocol Data Unit (PDU) unterscheidet sich in die Advertising Channel PDU u
 \subparagraph{Advertising Channel PDU} \mbox{} \vspace{0.2cm} \\
 Wie in Abbildung X 
 %TODO BILD VERWEIS
-gezeigt wird, besteht die Advertising Channel PDU aus einem 16 Bit langen Header und einem Payload variabler Länge.
+gezeigt wird, besteht die Advertising Channel PDU aus einem 16 Bit langen Header und einem Payload variabler Länge. RFU steht dabei für Reserved for Future Use und wird nicht weiter behandelt.
 % TODO BILD advertising channel pdu format S. 2201
 
 Dabei beinhaltet der Header unter anderem ein 4 Bit langes Feld für den PDU Type (bspw. Connectable Undirected Advertising Event oder Scan Request) und zwei Flags TxAdd und RxAdd für zusätzliche Informationen bezüglich des PDU Type. Die Bedeutungen von TxAdd und RxAdd hängen vom PDU Type ab. Die Menge aller PDU Types lässt sich untergliedern in Advertising PDUs, Scanning PDUs und Initiating PDUs. Bei allen bilden die ersten 6 Bytes des Payload die Adresse des Senders (Advertiser, Scanner oder Initiator). Hier sagt TxAdd bei jedem PDU Type aus, ob die angegebene Adresse des Senders öffentlich (TxAdd = 0) oder zufällig (TxAdd = 1) ist. Öffentlich heißt, dass es die unverfäschte Adresse des Geräts ist, und zufällig demnach, dass eine zufällig generierte Adresse angegeben wird (siehe Sektion X).
