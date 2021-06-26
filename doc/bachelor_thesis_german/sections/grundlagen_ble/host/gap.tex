@@ -1,1 +1,39 @@
 % TODO
+Modes
+
+Das Generic Access Profile (GAP) definiert verschiedene Rollen und Modi bzw. Prozeduren für Broadcasts und den Aufbau von Verbingungen.
+
+Für LE existieren die vier Rollen: Broadcaster, Observer, Peripheral und Central. Ein Broadcaster ist aus Sicht des Link Layers (LL) ein Advertiser, da er verbindungslos Daten in Form von Advertising Events sendet. Der zugehörige Modus ist der Broadcast Mode. Diese Advertising Events können von Observern, die die Observation Procedure ausführen, empfangen werden, weswegen diese aus Sicht des LL als Scanner bezeichnet werden. Die Rolle Peripheral wird einem Gerät zugewiesen, wenn es den Aufbau eines LE Physical Link akzeptiert. Dabei nimmt es in Bezug auf den Link Layer die Rolle des Slave ein. Die Rolle Central wird einem Gerät zugewiesen, wenn dieses den Aufbau einer physischen Verbindung einleitet. Dabei nimmt es in Bezug auf den Link Layer die Rolle des Master ein. Ein Gerät kann mehrere Rollen zur selben Zeit einnehmen.
+% TODO QUELLE Spec 4.0 S. 1638 f. 2.2.2 Roles when Operating over an LE Physical Channel
+% TODO QUELLE Spec 4.0 S. 1695 f. 9.9.1 und 9.9.2
+
+Jedes Gerät befindet sich entweder im Non-discoverable Mode, in dem es nicht von anderen Geräten entdeckt werden kann, oder im General Discoverable Mode bzw. im Limited Discoverable Mode, in denen es entdeckbar ist. Im Letzteren ist ein Gerät nur für eine bestimmte Dauer entdeckbar. Geräte, die andere Geräte entdecken sollen, müssen die General Discovery Procedure bzw. Limited Discovery Procedure ausführen.
+% TODO QUELLE Spec 4.0 S. 1697 9.2 Discovery Modes And Procedures
+
+Um Verbindungen und deren Aufbau zu steuern, gibt es mehrere Modi und Prozeduren, von denen einige in der Tabelle X zusammengefasst werden.
+% TODO TABELLE VERWEIS
+
+\begin{table}
+    \begin{tabularx}{\textwidth}{|p{4.5cm}|X|}
+    \hline
+    \textbf{Modus/Prozedur} & \textbf{Beschreibung} \\
+    \hline
+    Non-connectable Mode & keine Verbindungen akzeptieren \\
+    \hline
+    Directed Connectable Mode & nur Verbindungen von bekannten Peer-Geräten akzeptieren, die die Auto oder General Connection Establishment Procedure ausführen \\
+    \hline
+    Undirected Connectable Mode & nur Verbindungen von Geräten akzeptieren, die die Auto oder General Connection Establishment Procedure ausführen \\
+    \hline
+    Auto Connection Establishment Procedure & Aufbau von Verbindungen zu Geräten, die in einem Connectable Mode sind und deren Adresse auf der Whitelist eingetragen ist \\
+    \hline
+    General Connection Establishment Procedure & Aufbau von Verbindungen zu bekannten Peer-Geräten, die in einem Connectable Mode sind \\
+    \hline
+    Connection Parameter Update Procedure & Peripheral oder Central kann Link-Layer-Parameter einer Verbindung ändern \\
+    \hline
+    \end{tabularx}
+    \caption{Modi und Prozeduren für Verbindungen (Generic Access Profile)}
+\end{table}
+% TODO QUELLE Spec 4.0 S. 1704 - 1718 9.3 Connection Modes and Procedures
+
+Zusätzlich verfügt GAP über Sicherheitsaspekte, die in Sektion X behandelt werden.
+% TODO SEKTION VERWEIS BLE Sicherheit

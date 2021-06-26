@@ -1,5 +1,7 @@
 \documentclass[doktyp=barbeit]{TUBAFarbeiten}
 
+\usepackage[ngerman,english]{babel}
+
 \usepackage{selinput}% Auswahl der Dateikodierung (ansi,latin1,utf8,...)
 	\SelectInputMappings{adieresis={ä},germandbls={ß},Euro={€}}% Zeichenzuordnung für selinput.sty
 \usepackage[T1]{fontenc}% Einstellung Fontencoding
@@ -8,11 +10,18 @@
 \usepackage[backend=biber,sortlocale=de_DE_phonebook]{biblatex}% bessere Literaturverarbeitung
 \addbibresource{tubafarbeiten-beispiel.bib}% welche Literaturdatenbank genutzt werden soll; Endung nicht vergessen!
 
+\usepackage{tabularx,diagbox}
+
 %\usepackage{setspace}% Einstellungen Zeilenabstand
 	%\onehalfspacing% Einstellungen Zeilenabstand
 
 \setcounter{secnumdepth}{4}
 % \setcounter{tocdepth}{4}
+
+% Worttrennung für nicht bekannte Wörter
+\input{hyphenation.tex}
+
+
 
 \TUBAFFakultaet{Fakultät für Mathematik und Informatik}
 \TUBAFInstitut{Institut für Informatik}
@@ -100,11 +109,11 @@
 		\subsubsection{Generic Access Profile}
 			\input{sections/grundlagen_ble/host/gap.tex}
 
-		\subsubsection{Security Manager Protocol}
+		\subsubsection{Security Manager}
 			\input{sections/grundlagen_ble/host/smp.tex}
 
 	\subsection{Sicherheit}
-	% association models, privacy feature, quellen aus bookmarks prüfen
+		\input{sections/grundlagen_ble/sicherheit.tex}
 
 \newpage
 \section{Grundlagen zu Transport Layer Security}
