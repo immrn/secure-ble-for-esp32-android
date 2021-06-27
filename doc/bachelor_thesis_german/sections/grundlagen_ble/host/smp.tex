@@ -1,11 +1,13 @@
-Der Security Manager bzw. das Security Manager Protocol (SMP) ist dafür zuständig eine sichere Verbindung zwischen zwei Geräten (Master und Slave) aufzubauen. Dies umfasst im Wesentlichen das Pairing und die Verteilung von Schlüsseln. Entsprechend der Abbildung X lässt sich das SMP in die BLE-Architektur einordnen.
+Der Security Manager bzw. das Security Manager Protocol (SMP) ist dafür zuständig eine sichere Verbindung zwischen zwei Geräten (Master und Slave) aufzubauen. Dies umfasst im Wesentlichen das Pairing, welches zur Authentifizierung und Generierung eines Schlüssels dient, und die Verteilung von Schlüsseln. Entsprechend der Abbildung X lässt sich das SMP in die BLE-Architektur einordnen.
 % TODO BILD VERWEIS
 % TODO BILD Spec 4.0 S. 1958 Figure 1.1
 % TODO QUELLE Spec 4.0 S. 1958
 
-Das Pairing lässt sich in drei Phasen aufteilen.\\\\
+Das Pairing lässt sich in drei Phasen aufteilen. Phase 1 und 2 dienen der Generierung eines Schlüssels, den beide Geräte zur Verschlüsselung und Authentifizierung im Link Layer nutzen. Dafür wird der Cipher Block Chaining - Message Authentication Code (CCM) Mode in Verbindung mit dem Advanced Encryption Standard (AES), genauer dem AES-128 Block Cipher, genutzt.\\\\
+% TODO QUELLE Spec. 4.0 S. 2285, 1 ENCRYPTION AND AUTHENTICATION OVERVIEW
 
-\paragraph{Pairing: Phase 1}
+\paragraph{Pairing: Phase 1} \mbox{} \vspace{0.2cm} \\
+
 Die erste Phase ist der Pairing Feature Exchange, bei dem die beiden Geräte ihre für den Nutzer zugänglichen Ein- und Ausgabemöglichkeiten (IO Capabilities) austauschen. Die Tabellen X und Y 
 % TODO TABELLE VERWEIS
 listen die entsprechenden Bezeichnungen dieser Möglichkeiten auf.
@@ -43,7 +45,8 @@ listen die entsprechenden Bezeichnungen dieser Möglichkeiten auf.
 Desweiteren tauschen die Geräte in der ersten Phase Informationen darüber aus, ob eine Authentifizierung zum Schutz vor einem Man-In-The-Middle-Angriff nötig ist (MITM Flag), und ob Daten für die Authentifizierung über die Pairing-Methode Out Of Band (OOB), d.h. mittels einer anderen Technologie (z.B. Near Field Communication), übertragen werden können (OOB Flag). Außerdem werden die minimalen und maximalen Größen für die Schlüssel ausgetauscht, die sich in 8 Bit großen Schritten zwischen 56 Bit (7 Byte) und 128 Bit (16 Byte) befinden. Dabei wird der kleinere Wert beider maximaler Größen übernommen. Falls die beiden Spannen sich nicht schneiden, wird das Pairing abgebrochen.
 
 
-\paragraph{Pairing: Phase 2}
+\paragraph{Pairing: Phase 2} \mbox{} \vspace{0.2cm} \\
+
 Anhand der ausgetauschten Informationen aus der ersten Phase wird in der zweiten Phase entschieden, welche der folgenden Methoden zur Generierung des Short Term Key (STK) bzw. Long Term Key (LTK) zu verwenden ist:
 
 \begin{itemize}
@@ -62,7 +65,8 @@ Haben beide Geräte OOB-Authentifizierungsdaten für das LE Legacy Pairing, wird
 
 
 
-\subparagraph{Pairing Methoden}
+\subparagraph{Pairing Methoden} \mbox{} \vspace{0.2cm} \\
+
 Bei der \textbf{Numeric Comparison} wird dem Nutzer auf beiden Geräten jeweils eine zufällig generierte sechsstellige Dezimalzahl angezeigt. Diese muss der Nutzer vergleichen und im Falle der Übereinstimmung auf beiden Geräten bestätigen oder anderenfalls ablehnen. Somit kann der Nutzer unabhängig von der Namensgegebung der Geräte sicherstellen, die richtigen Geräte ausgewählt zu haben. Zudem bietet diese Methode Schutz vor MITM-Angriffen. Außenstehende, die Kenntnis über diese Zahl gewonnen haben, können laut X
 % TODO QUELLE VERWEIS Sepc 4.2 S. 244 5.2.4.1 Numeric Comparison
 damit keinen Vorteil zur Entschlüsselung der zwischen den beiden Geräten ausgetauschten Daten erlangen, da die Zahl nicht als Eingabe zur Generierung eines Schlüssels verwendet wird.
@@ -80,7 +84,7 @@ Ein Schutz gegen MITM-Angriffe existiert, da diese nur mit einer Wahrscheinlicht
 
 
 
-\subparagraph{LE Legacy Pairing: Schlüssel und deren Generierung}
+\subparagraph{LE Legacy Pairing: Schlüssel und deren Generierung} \mbox{} \vspace{0.2cm} \\
 
 Beim LE Legacy Pairing zweier Geräte generieren beide einen 128 Bit langen Temporary Key (TK), der bei der Authentifizierung genutzt wird, um den STK zu generieren und die Verbindung zu verschlüsseln. In Just Works wird der TK auf null gesetzt. Bei der Methode Passkey Entry ist der TK die besagte zufällig generierte sechstellige Dezimalzahl, die bereits mit 20 Bit dargestellt werden kann, weswegen die restlichen Bit des TK auf null gesetzt werden müssen. Dagegen kann bei OOB auf diese Einschränkung verzichtet werden, wodurch der TK wahrhaftig eine Länge von 128 Bit besitzt.
 
@@ -90,7 +94,7 @@ Für diese sind die Eingabewerte \textit{TK}, \textit{Mrand}, der Pairing Reques
 % TODO BILD VERWEIS
 \begin{figure}[hbt!]
     \centering
-    \includegraphics[width=0.5\linewidth]{graphics/LE_Legacy_Pairing_STK_Generation.svg}
+    % TODO \includegraphics[width=0.5\linewidth]{graphics/LE_Legacy_Pairing_STK_Generation.svg}
     \caption{STK Generierung in LE Legacy Pairing}
 \end{figure}
 
@@ -101,7 +105,7 @@ und deren Eingabewerte \textit{TK}, \textit{Srand} und \textit{Mrand} generiert.
 
 
 
-\subparagraph{LE Secure Connections Pairing: Schlüssel und deren Generierung}
+\subparagraph{LE Secure Connections Pairing: Schlüssel und deren Generierung} \mbox{} \vspace{0.2cm} \\
 
 Beim LE Secure Connections Pairing wird ein Long Term Key (LTK) erstellt. Zuvor erstellen beide Geräte jeweils ein ECDH-Schlüsselpaar (PK - Public Key, SK - Private Key) und tauschen ihre Public Keys aus. Danach berechnet jedes Gerät den Diffie-Hellman-Schlüssel aus seinem Private Key und dem Public Key des Anderen. Durch den Diffie-Hellman-Schlüssel kennen beide Parteien ein gemeinsames Geheimnis, mit dem sie den weiteren Datenaustausch zur Authentifizierung verschlüsseln können. Die Authentifizierung ist notwendig, da der ECDH-Schlüsselaustausch zwar resistent gegen passives Abhören ist, jedoch nicht gegen MITM-Angriffe.
 % TODO QUELLE Spec. 4.2 S. 2307 2.3.5.6.1 Public Key Exchange
@@ -112,15 +116,16 @@ Just Works bietet keinen Schutz vor einem MITM-Angriff.
 % TODO QUELLE Spec. 4.2 S. 245, 5.2.4.2 Just Works
 Ein MITM-Angriff während des Passkey Entry gelingt nur mit einer Wahrscheinlichkeit von 0,000001. 
 % TODO QUELLE Spec. 4.2 S. 2311, 2.3.5.6.3 Authentication Stage 1 – Passkey Entry
-Wie anfällig OOB für Angriffe ist hängt von der verwendeten Technologie ab und der vereinbarten Schlüsselgröße. Ist die OOB-Technologie sicher, besteht für einen erfolgreichen MITM-Angriff eine Wahrscheinlichkeit von 0,000001.
-% TODO QUELLE Spec. 4.2 S. 2305, 2.3.5.4 Out of Band
+Wie anfällig OOB für Angriffe ist hängt von der verwendeten OOB-Technologie ab.
+% TODO QUELLE Spec. 4.2 S. 2312, 2.3.5.6.4 Authentication Stage 1 – Out of Band
 
 Nach der Ausführung einer Pairing-Methode wird der LTK als Teilergebnis der Funktion f5 [X] 
 % TODO QUELLE Spec. 4.2 S. 2292, 2.2.7 LE Secure Connections Key Generation Function f5
 mit den Eingabewerten Diffie-Hellman-Key, ein Nonce des Masters, ein Nonce des Slaves und der Adresse des Masters und Slaves ermittelt.\\\\
 % TODO QUELLE Spec. 4.2 S. 2314, 2.3.5.6.5 Authentication Stage 2 and Long Term Key Calculation
 
-\paragraph{Pairing: Phase 3}
+\paragraph{Pairing: Phase 3} \mbox{} \vspace{0.2cm} \\
+
 Wurde der STK bzw. LTK generiert, wird dieser genutzt, um die Verbindung zu verschlüsseln. Nun können in der dritten Phase transportspezifische Schlüssel ausgetauscht werden. Z.B. wird der Identity Resolving Key (IRK) zur Generierung und Auflösung von zufälligen Adressen verwendet und der Connection Signature Resolving Key (CSRK) zur Signatur von Daten und Überprüfung von Signaturen.
 
 % Für Numeric Comparison und Just Works wird entsprechend Abb. X fortgefahren.
