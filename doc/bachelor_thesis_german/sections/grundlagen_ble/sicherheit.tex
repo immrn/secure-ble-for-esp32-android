@@ -9,51 +9,54 @@ wird dargestellt welchen Schutz die Pairing-Methoden des LE Legacy Pairing und d
 \begin{table}
     \begin{tabularx}{\textwidth}{|p{2.8cm}|p{2cm}|p{3cm}|p{2cm}|p{3cm}|}
         \hline
-        & \multicolumn{2}{|X|}{\textbf{Schutz gegen Passives Abhören}} & \multicolumn{2}{|X|}{\textbf{Schutz gegen MITM-Angriff}} \\
+        & \multicolumn{2}{X|}{\textbf{Schutz gegen Passives Abhören}} & \multicolumn{2}{X|}{\textbf{Schutz gegen MITM-Angriff}} \\
         & \textbf{LE Legacy} & \textbf{LE Secure Connections} & \textbf{LE Legacy} & \textbf{LE Secure Connections} \\
         \hline
-        \textbf{Numeric Comparison} & - & Ja & - & Ja \\
+        \textbf{Numeric Comparison} & - & Ja & - & Ja \cite{BtSpec4.2_2309} \\
         \hline
-        \textbf{Just Works} & Nein & Ja & Nein & Nein \\
+        \textbf{Just Works} & Nein \cite{BtSpec4.2_2304_b} & Ja \cite{BtSpec4.2_245} & Nein \cite{BtSpec4.2_2304_b} & Nein \cite{BtSpec4.2_245} \\
         \hline
-        \textbf{Out of Band} & \multicolumn{4}{|l|}{abhängig von OOB-Technologie} \\
+        \textbf{Out of Band} & \multicolumn{4}{|l|}{abhängig von OOB-Technologie \cite{BtSpec4.2_2305} \cite{BtSpec4.2_2312-2313}} \\
         \hline
-        \textbf{Passkey Entry} & Nein & Ja & Ja & Ja \\
+        \textbf{Passkey Entry} & Nein \cite{BtSpec4.2_2304} & Ja & Ja \cite{BtSpec4.2_2304} & Ja \cite{BtSpec4.2_2311}\\
         \hline
     \end{tabularx}
-    \caption{Schutz durch Pairing-Methoden vor passivem Abhören und MITM-Angriffen}
+    \caption[Schutz durch Pairing-Methoden vor passivem Abhören und MITM]{Schutz durch Pairing-Methoden vor passivem Abhören und MITM-Angriffen; Der Bindestrich symbolisiert, dass diese Methode nicht verfügbar ist. LE Secure Connections ist aufgrund des ECDH-Schlüsselaustausches \cite{BtSpec4.2_2307} generell vor passivem Abhören geschützt.}
 \end{table}
+% QUELLE Spec. 4.2 S. 2304, 2.3.5.2 LE Legacy Pairing - Just Works
+% QUELLE Spec. 4.2 S. 245, 5.2.4.2 Just Works
+% QUELLE Spec. 4.2 S. 2305, 2.3.5.4 Out of Band
+% QUELLE Spec. 4.2 S. 2312, 2.3.5.6.4 Authentication Stage 1 – Out of Band
+% QUELLE Spec. 4.2 S. 2304, 2.3.5.3 LE Legacy Pairing - Passkey Entry
+% QUELLE Spec. 4.2 S. 2311, 2.3.5.6.3 Authentication Stage 1 – Passkey Entry
 
-Dabei ist zu beachten, dass die Methode Numeric Comparison dem Nutzer mit einer Wahrscheinlichkeit von 0,999999 einen stattfindenden MITM-Angriff signalisiert, bevor dieser das Pairing fortsetzt, und dass die Methode Passkey Entry nur mit einer Wahrscheinlichkeit von 0,000001 anfällig für einen MITM-Angriff ist. Die Methode OOB des LE Legacy Pairing ist bei einer sicheren OOB-Technologie ebenfalls mit einer Wahrscheinlichkeit von 0,000001 oder kleiner (je nach Schlüsselgröße) anfällig gegen MITM-Angriffe.
-% TODO QUELLE Spec. 4.2 S. 2304, 2.3.5.2 LE Legacy Pairing - Just Works
-% TODO QUELLE Spec. 4.2 S. 2305, 2.3.5.4 Out of Band
-% TODO QUELLE Spec. 4.2 S. 2304, 2.3.5.3 LE Legacy Pairing - Passkey Entry
-% TODO QUELLE Spec. 4.2 S. 2309, 2.3.5.6.2 Authentication Stage 1 – Just Works or Numeric Comparison
-% TODO QUELLE Spec. 4.2 S. 245, 5.2.4.2 Just Works
-% TODO QUELLE Spec. 4.2 S. 2312, 2.3.5.6.4 Authentication Stage 1 – Out of Band
-% TODO QUELLE Spec. 4.2 S. 2311, 2.3.5.6.3 Authentication Stage 1 – Passkey Entry
 
-Obwohl die Methoden Numeric Comparison und Passkey Entry des LE Secure Connections Pairing eine beachtliche Sicherheit bieten, ist laut den Bluetooth-Spezifikationen 4.0 bis 5.2 jede dieser Bluetooth-Versionen in der Lage das LE Legacy Pairing auszuführen, welches wiederum anfälliger ist (OOB ausgenommen). 
-% TODO QUELLE Spec. 4.2 S. 248, 5.4 LE SECURITY
-% TODO QUELLE Spec. 5.2 S. 277, 5.4 LE SECURITY
-Vermutlich kann dies durch die letztendlichen Entwickler von Bluetooth-Software bzw. -Hardware oder durch den Anwender selbst eingeschränkt werden. Falls dies nicht umgesetzt wird, stellt die Möglichkeit, auf das LE Legacy Pairing zu wechseln, ein Sicherheitsrisiko dar.
+Dabei ist zu beachten, dass die Methode Numeric Comparison dem Nutzer mit einer Wahrscheinlichkeit von 0,999999 einen stattfindenden MITM-Angriff signalisiert \cite{BtSpec4.2_2309}, bevor dieser das Pairing fortsetzt, und dass die Methode Passkey Entry nur mit einer Wahrscheinlichkeit von 0,000001 anfällig für einen MITM-Angriff ist \cite{BtSpec4.2_2304} \cite{BtSpec4.2_2311}. Die Methode OOB des LE Legacy Pairing ist bei einer sicheren OOB-Technologie ebenfalls mit einer Wahrscheinlichkeit von 0,000001 oder kleiner (je nach Schlüsselgröße) anfällig gegen MITM-Angriffe \cite{BtSpec4.2_2305}.
+% QUELLE Spec. 4.2 S. 2309, 2.3.5.6.2 Authentication Stage 1 – Just Works or Numeric Comparison
+% QUELLE Spec. 4.2 S. 2304, 2.3.5.3 LE Legacy Pairing - Passkey Entry
+% QUELLE Spec. 4.2 S. 2311, 2.3.5.6.3 Authentication Stage 1 – Passkey Entry
+% QUELLE Spec. 4.2 S. 2305, 2.3.5.4 Out of Band
+
+Obwohl die Methoden Numeric Comparison und Passkey Entry des LE Secure Connections Pairing eine beachtliche Sicherheit bieten, ist laut den Bluetooth-Spezifikationen 4.0 bis 5.2 jede dieser Bluetooth-Versionen in der Lage das LE Legacy Pairing auszuführen \cite{BtSpec4.2_248_b} \cite{BtSpec5.2_277}, welches wiederum anfälliger ist (OOB ausgenommen). 
+% QUELLE Spec. 4.2 S. 248, 5.4 LE SECURITY
+% QUELLE Spec. 5.2 S. 277, 5.4 LE SECURITY
+Vermutlich kann dies durch die letztendlichen Entwickler einer Bluetooth-Software bzw. -Hardware oder durch den Anwender selbst eingeschränkt werden. Falls dies nicht umgesetzt wird, stellt die Möglichkeit einer Rückstufung auf LE Legacy Pairing ein Sicherheitsrisiko dar.
 
 Dabei sei zu erwähnen, dass jede Methode bestimmte Möglichkeiten zur Ein- und Ausgabe von den zu verwendenten Geräten voraussetzt. Ist es für den Anwender nicht möglich diese Voraussetzungen in den Geräten zu implementieren, kann BLE selbst keine Schutz bieten.\\\\
 
-Ein weiteres Problem ist die Sicherheit auf der Anwendungsebene. Unterstützt ein System weitere Anwendungen, auf die der Anwender keinen Zugriff hat, könnte es möglich sein, dass eine solche fremde Anwendung auf Daten zugreifen kann, die nur für die Anwendung des Anwenders bestimmt sind. Die Möglichkeit dazu besteht, da BLE zu übertragende Daten innerhalb des Controllers auf der Ebene des Link Layer verschlüsselt. 
-% TODO QUELLE Spec. 4.0 S. 196, 5.2.3 Encryption
-% TODO QUELLE Spec. 4.0 S. 2285, 1 ENCRYPTION AND AUTHENTICATION OVERVIEW
-Ein Beispiel für ein solches System ist das Betriebssystem Android von der Open Handset Alliance. Auf Androids Webpräsenz für BLE wird darauf hingewiesen, dass BLE keine Sicherheit auf Anwendungsebene liefert: "When a user pairs their device with another device using BLE, the data that's communicated between the two devices is accessible to all apps on the user's device".
-% TODO ZITAT
-% TODO QUELLE https://developer.android.com/guide/topics/connectivity/bluetooth-le Bluetooth low energy -> Caution
+Ein weiteres Problem ist die Sicherheit auf der Anwendungsebene. Unterstützt ein System weitere Anwendungen, auf die der Anwender keinen Zugriff hat, könnte es möglich sein, dass eine solche fremde Anwendung auf Daten zugreifen kann, die nur für die Anwendung des Anwenders bestimmt sind. Die Möglichkeit dazu besteht, da BLE zu übertragende Daten innerhalb des Controllers auf der Ebene des Link Layer verschlüsselt \cite{BtSpec4.0_196} \cite{BtSpec4.0_2285}. 
+% QUELLE Spec. 4.0 S. 196, 5.2.3 Encryption
+% QUELLE Spec. 4.0 S. 2285, 1 ENCRYPTION AND AUTHENTICATION OVERVIEW
 
-Den Beweis dafür, dass Daten, die durch BLE über den Link Layer verschlüsselt oder unverschlüsselt übertragen werden, von anderen Apps ausgelesen werden können, liefert eine Studie der Royal Holloway University of London. Diese zeigt, wie innerhalb des Android Betriebssystems eine fremde Anwendung Daten über das Protokoll ATT bzw. GATT (siehe Sektion X) 
-% TODO SEKTION VERWEIS gatt
-empfangen kann, die für eine andere Anwendung bestimmt sind.
+Ein Beispiel für ein solches System ist das Betriebssystem Android von der Open Handset Alliance. Auf Androids Webpräsenz für BLE wird darauf hingewiesen, dass BLE keine Sicherheit auf Anwendungsebene liefert: "When a user pairs their device with another device using BLE, the data that's communicated between the two devices is accessible to all apps on the user's device" \cite{AndroidAppLayerSec}.
+% QUELLE ZITAT https://developer.android.com/guide/topics/connectivity/bluetooth-le Bluetooth low energy -> Caution
+
+Den Beweis dafür, dass Daten, die durch BLE über den Link Layer verschlüsselt oder unverschlüsselt übertragen werden, von anderen Apps ausgelesen werden können, liefert eine Studie der Royal Holloway University of London \cite{RoyalHollowayUniversity}. Diese zeigt, wie innerhalb des Android Betriebssystems eine fremde Anwendung Daten über das Protokoll ATT bzw. GATT 
+empfangen kann, die theoretisch für eine andere Anwendung bestimmt sind.
 % TODO QUELLE
 % A Study of the Feasibility of Co-located App Attacks against BLE and a Large-Scale Analysis of the Current Application-Layer Security LandscapePallavi Sivakumaran and Jorge Blasco, Royal Holloway University of London
 % PDF S. 4 - 6
 % https://www.usenix.org/conference/usenixsecurity19/presentation/sivakumaran 
 
 
-% TODO Angriff: BLESA, für GATT relevant
+% TODOOPT Angriff: BLESA, für GATT relevant

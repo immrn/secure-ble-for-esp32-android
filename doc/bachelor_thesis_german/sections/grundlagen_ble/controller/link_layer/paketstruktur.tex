@@ -1,14 +1,15 @@
-Der Link Layer nutzt ein gemeinsames Paketformat für das Übertragen von Advertising-Paketen und Anwenderdaten-Pakten, dass in der Abbildung X
+Der Link Layer nutzt ein gemeinsames Paketformat \cite{BtSpec4.0_2200-2201} für das Übertragen von Advertising-Paketen und Anwenderdaten-Pakten, dass in der Abbildung X
 % TODO BILD VERWEIS paketformat
 dargestellt ist.\\
 % TODO BILD paketformat Spec. 4.0 S. 2200
+% QUELLE Spec 4.0 S. 2200 - 2201
 
 Die Preamble hat eine Größe von acht Bit und wird genutzt, um auf Empfängerseite die Frequenz zu synchronisieren, die Zeiteinteilung der Symbole zu schätzen und um die Automatic Gain Control zu trainieren. Die Preamble beträgt immer 0b01010101, falls das Bit mit dem niedrigsten Stellenwert (LSB für Least Significant Bit) der Access Address 1 ist. Anderenfalls beträgt die Preamble 0b10101010.
 \\\\
 Die Access Address hat eine Größe von 32 Bit und identifziert eine Verbindung über den Link Layer bzw. dient dazu Pakete mittels des festgelegten Wertes 0x8E89BED6 als Advertisement-Pakete zu identifzieren. Bevor ein Initiator eine Verbindung zu einem Advertiser aufbaut, erstellt er eine zufällige Access Address, die neben weiteren Bedingungen nicht der des Advertisement"=Pakets gleicht oder sich von dieser um ein Bit unterscheidet. Diese Access Address sendet er dann innerhalb der Verbindungsanfrage an den Advertiser.
 \\\\
-Das letzte Feld des Link-Layer-Pakets ist der 24 Bit lange Cyclic Redundancy Check (CRC), der über das PDU-Feld berechnet wird. Im Fall, dass auf Ebene des Link Layer die PDU verschlüsselt wird, wird der CRC erst nach der Verschlüsselung generiert. Unabhängig davon, ob verschlüsselt wird oder nicht, wird anschließend ein Whitening durchgeführt, um Sequenzen vieler gleichbleibender Bits (bspw. 0b00000000) zu verhindern.
-% TODO QUELLE s. 2217
+Das letzte Feld des Link-Layer-Pakets ist der 24 Bit lange Cyclic Redundancy Check (CRC), der über das PDU-Feld berechnet wird. Im Fall, dass auf Ebene des Link Layer die PDU verschlüsselt wird, wird der CRC erst nach der Verschlüsselung generiert. Unabhängig davon, ob verschlüsselt wird oder nicht, wird anschließend ein Whitening \cite{BtSpec4.0_2217-2218} durchgeführt, um Sequenzen vieler gleichbleibender Bits (bspw. 0b00000000) zu verhindern.
+% QUELLE Spec 4.0 S. 2217-2218
 \\\\
 Die Protocol Data Unit (PDU) unterscheidet sich in die Advertising Channel PDU und Data Channel PDU.
 \\\\
@@ -16,18 +17,17 @@ Die Protocol Data Unit (PDU) unterscheidet sich in die Advertising Channel PDU u
 \subparagraph{Advertising Channel PDU} \mbox{} \vspace{0.2cm} \\
 Wie in Abbildung X 
 %TODO BILD VERWEIS
-gezeigt wird, besteht die Advertising Channel PDU aus einem 16 Bit langen Header und einem Payload variabler Länge. RFU steht dabei für Reserved for Future Use und wird nicht weiter behandelt.
+gezeigt wird, besteht die Advertising Channel PDU \cite{BtSpec4.0_2201-2208} aus einem 16 Bit langen Header und einem Payload variabler Länge. RFU steht dabei für Reserved for Future Use und wird nicht weiter behandelt.
 % TODO BILD advertising channel pdu format S. 2201
 
-Dabei beinhaltet der Header unter anderem ein 4 Bit langes Feld für den PDU Type (bspw. Connectable Undirected Advertising Event oder Scan Request) und zwei Flags TxAdd und RxAdd für zusätzliche Informationen bezüglich des PDU Type. Die Bedeutungen von TxAdd und RxAdd hängen vom PDU Type ab. Die Menge aller PDU Types lässt sich untergliedern in Advertising PDUs, Scanning PDUs und Initiating PDUs. Bei allen bilden die ersten 6 Bytes des Payload die Adresse des Senders (Advertiser, Scanner oder Initiator). Hier sagt TxAdd bei jedem PDU Type aus, ob die angegebene Adresse des Senders öffentlich (TxAdd = 0) oder zufällig (TxAdd = 1) ist. Öffentlich heißt, dass es die unverfäschte Adresse des Geräts ist, und zufällig demnach, dass eine zufällig generierte Adresse angegeben wird (siehe Sektion X).
+Dabei beinhaltet der Header unter anderem ein 4 Bit langes Feld für den PDU Type (bspw. Connectable Undirected Advertising Event oder Scan Request) und zwei Flags TxAdd und RxAdd für zusätzliche Informationen bezüglich des PDU Type. Die Bedeutungen von TxAdd und RxAdd hängen vom PDU Type ab. Die Menge aller PDU Types lässt sich untergliedern in Advertising PDUs, Scanning PDUs und Initiating PDUs. Bei allen bilden die ersten 6 Bytes des Payload die Adresse des Senders (Advertiser, Scanner oder Initiator). Hier sagt TxAdd bei jedem PDU Type aus, ob die angegebene Adresse des Senders öffentlich (TxAdd = 0) oder zufällig (TxAdd = 1) ist. Öffentlich heißt, dass es die unverfäschte Adresse des Geräts ist, und zufällig demnach, dass eine zufällig generierte Adresse angegeben wird (siehe Sektion X). 
 % TODO VERWEIS auf Sicherheitslücken, privacy feature
 RxAdd dagegen ist nur bei PDU Types von Bedeutung, die in ihrem Payload eine zweite Adresse enthalten, nämlich die des Empfängers. Analog zu TxAdd sagt RxAdd aus, ob die Adresse des Empfängers öffentlich (RxAdd = 0) oder zufällig (RxAdd = 1) ist.
-% TODO QUELLE Spec S. 2203 ff.
 
 Ein weiteres Feld im Header der Advertising Channel PDU ist das 6 Bit lange Feld für die Länge des Payloads in Bytes, dessen Wert eine Spanne von 6 bis 37 Byte deckt.
 \\\\
 \subparagraph{Data Channel PDU} \mbox{} \vspace{0.2cm} \\
-Die Data Channel PDU nutzt entsprechend der Abbildung X 
+Die Data Channel PDU \cite{BtSpec4.0_2208-2209} nutzt entsprechend der Abbildung X 
 % TODO BILD VERWEIS
 einen 16 Bit langen Header, einen Payload variabler Länge und optional einen 32 Bit langen Message Integry Check (MIC), der die Integrität des Payload sicherstellt. Das MIC-Feld entfällt bei einer unverschlüsselten Link-Layer-Verbindung und bei einer Data Channel PDU, deren Payload die Länge null Beträgt.
 
@@ -38,5 +38,3 @@ Auf die LLID folgt das Feld der Next Expected Sequence Number (NESN) und das Fel
 näher erläutert werden.
 
 Unter anderem beinhaltet der Header ein 5 Bit langes Feld für die Länge des Payload in Byte und ggf. einschließlich der Länge des MIC. Der maximale Wert der Länge beträgt 31 Byte, wobei sich der Payload in jedem Fall auf eine maximale Länge von 27 Byte bemisst.
-
-% TODO QUELLE paketformat allgemein Spec. 4.0 S. 2200 f.

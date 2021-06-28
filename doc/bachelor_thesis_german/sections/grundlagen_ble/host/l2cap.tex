@@ -11,7 +11,7 @@
 Das Logical Link Control and Adaption Protocol (L2CAP) bildet die unterste Schicht im Host (siehe Abb. X) 
 % TODO BILD VERWEIS host stack aufbau im überblick
 und dient je nach Konfiguration dazu, um den Datenverkehr zu steuern und um zwischen höheren und niedrigeren Schichten zu vermitteln.
-% TODO QUELLE Spec 4.0 S. 1400 2.3 Operation Between Layers
+% TODOOPT QUELLE Spec 4.0 S. 1400 2.3 Operation Between Layers
 Es verfügt über fünf Modi:
 \begin{itemize}
     \item Basic L2CAP Mode
@@ -21,9 +21,9 @@ Es verfügt über fünf Modi:
     \item Streaming Mode
     \item LE Credit Based Flow Control Mode (seit Bluetooth 4.2)
 \end{itemize}
-Für Bluetooth allgemein (BR/EDR und LE) wird immer der Basic L2CAP Mode genutzt, wenn kein anderer festgelegt wird. X behauptet, dass der LE Credit Based Flow Control Mode als einziger Modus für verbindungsorientierte LE-Kanäle genutzt werden soll ("This is the only mode that shall be used for LE L2CAP connection oriented channels"X). Da diese Aussage nicht ausschließt, dass eine verbindungsorientierte LE-Verbindung über den standardmäßig festgelegten Basic L2CAP Mode erfolgen kann, und der LE Credit Based Flow Control Mode noch nicht in der Bluetooth-Version 4.0 vertreten war Y, ist anzunehmen, dass eine verbindungsorientierte LE-Verbindung auch mit dem Basic L2CAP Mode möglich ist.
-% TODO QUELLE ZITAT Spec. 4.2 S. 1734
-% TODO Y QUELLE Spec 4.0 S. 1401
+Für Bluetooth allgemein (BR/EDR und LE) wird immer der Basic L2CAP Mode genutzt, wenn kein anderer festgelegt wird. Der LE Credit Based Flow Control Mode soll \cite{BtSpec4.2_1735} zufolge als einziger Modus für verbindungsorientierte LE-Kanäle genutzt werden ("This is the only mode that shall be used for LE L2CAP connection oriented channels" \cite{BtSpec4.2_1735}). Da diese Aussage nicht ausschließt, dass eine verbindungsorientierte LE-Verbindung über den standardmäßig festgelegten Basic L2CAP Mode erfolgen kann, und der LE Credit Based Flow Control Mode noch nicht in der Bluetooth-Version 4.0 vertreten war \cite{BtSpec4.0_1401}, ist anzunehmen, dass eine verbindungsorientierte LE-Verbindung auch mit dem Basic L2CAP Mode möglich ist.
+% QUELLE ZITAT Spec. 4.2 S. 1735
+% QUELLE Spec 4.0 S. 1401
 
 Logische Kanäle, genannt L2CAP Channels, dienen innerhalb eines Geräts als Endpunkt für höher gelegene Protokolle oder direkt für die Anwendung und sind für jedes Gerät individuell an dem Channel Identifier (CID) unterscheidbar. D.h. der L2CAP Channel einer Verbindung zwischen zwei Geräten muss von diesen nicht zwingend mit der gleichen CID gekennzeichnet sein. Einige CIDs sind bestimmten Zwecken zugeteilt (siehe Anhang X).
 % TODO ANHANG VERWEIS und ANHANG EINTRAG Tabelle aus Spec. 4.2 S. 1731 Table 2.2
@@ -40,7 +40,6 @@ Dafür wird ein separater L2CAP Channel mit der CID 0x0005 genutzt. Zudem betrei
 \\\\
 Da der L2CAP Layer nach unten durch das HCI mit dem Link Layer verknüpft ist, müssen die L2CAP PDUs dem Paketformat des HCI und dieses dem Paketformat des Link Layers gerecht werden. Dementsprechend werden die L2CAP PDUs fragmentiert bzw. wieder zusammengesetzt.
 % TODO BILD + VERWEIS Spec 4.0 S. 1487, Mischung aus Figure 7.1 und 7.2, vereinfacht darstellen: L2CAP PDU -> HCI Paket -> Link Layer Paket
-% TODO QUELLE Spec 4.0 S. 1486-1488
 \\\\
 Der Resource Manager übernimmt mehrere Aufgaben. Dazu zählt die Kapselung der Service Data Units (SDU)
 
