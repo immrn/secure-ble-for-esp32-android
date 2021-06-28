@@ -10,7 +10,13 @@
 \usepackage[backend=biber,style=numeric,sorting=none,sortlocale=de_DE_phonebook]{biblatex}% bessere Literaturverarbeitung
 \addbibresource{literaturquellen.bib}
 
+\usepackage{hyperref}
+\usepackage[table,figure]{hypcap}
+
 \usepackage{tabularx,diagbox}
+\usepackage{float}
+
+\usepackage{amsmath}
 
 %\usepackage{setspace}% Einstellungen Zeilenabstand
 	%\onehalfspacing% Einstellungen Zeilenabstand
@@ -56,63 +62,84 @@
 
 \newpage
 \section{Einleitung}
+\label{sec: einleitung}
 
 	\subsection{Themenstellung}
+		\label{sec: themenstellung}
 		\input{sections/einleitung/themenstellung.tex}
 
 	\subsection{Problemstellung}
+		\label{sec: problemstellung}
 		\input{sections/einleitung/problemstellung.tex}
 
 \newpage
 \section{Grundlagen zu Bluetooth Low Energy}
+\label{sec: grundlagen le}
 
 	\subsection{Überblick}
+		\label{sec: le ueberblick}
 		\input{sections/grundlagen_ble/ueberblick.tex}
 
 	\subsection{Topologie}
+		\label{sec: le topologie}
 		\input{sections/grundlagen_ble/topologie.tex}
 
 	\subsection{Verbindungsaufbau}
+		\label{sec: le verbindungsaufbau}
 		\input{sections/grundlagen_ble/verbindungsaufbau.tex}
 
 	\subsection{Controller}
+		\label{sec: le controller}
 		\input{sections/grundlagen_ble/controller/controller_allgemein.tex}
 
 		\subsubsection{Physical Layer}
+			\label{sec: le phy}
 
 			\paragraph{Physical Channel} \mbox{} \vspace{0.2cm} \\
+				\label{sec: le phy channel}
 				\input{sections/grundlagen_ble/controller/physical_layer/physical_channel.tex}
 
 			\paragraph{Physical Link} \mbox{} \vspace{0.2cm} \\
+				\label{sec: le phy link}
 				\input{sections/grundlagen_ble/controller/physical_layer/physical_link.tex}
 
 		\subsubsection{Link Layer}
+			\label{sec: le ll}
 
 			\paragraph{Paketstruktur}
+				\label{sec: le ll paketstruktur}
 				\input{sections/grundlagen_ble/controller/link_layer/paketstruktur.tex}
 
 			\paragraph{Logical Transport} \mbox{} \vspace{0.2cm} \\
+				\label{sec: le ll transport}
 				\input{sections/grundlagen_ble/controller/link_layer/logical_transport.tex}
 
 			\paragraph{Logical Link} \mbox{} \vspace{0.2cm} \\
+				\label{sec: le ll link}
 				\input{sections/grundlagen_ble/controller/link_layer/logical_link.tex}
 
 	\subsection{Host}
+		\label{sec: le host}
 		\input{sections/grundlagen_ble/host/host_allgemein.tex}
 
 		\subsubsection{Logical Link Control and Adaption Protocol}
+			\label{sec: le l2cap}
 			\input{sections/grundlagen_ble/host/l2cap.tex}
 
 		\subsubsection{Generic Attribute Profile}
+			\label{sec: le gatt}
 			\input{sections/grundlagen_ble/host/gatt.tex}
 
 		\subsubsection{Generic Access Profile}
+			\label{sec: le gap}
 			\input{sections/grundlagen_ble/host/gap.tex}
 
 		\subsubsection{Security Manager}
+			\label{sec: le sm}
 			\input{sections/grundlagen_ble/host/smp.tex}
 
 	\subsection{Sicherheit}
+		\label{sec: le security}
 		\input{sections/grundlagen_ble/sicherheit.tex}
 
 \newpage

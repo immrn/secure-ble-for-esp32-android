@@ -1,0 +1,7 @@
+Master->Slave:Mconfirm
+Master<-Slave:Sconfirm
+
+Master->Slave:Mrand
+Slave->Slave:Prüfe Mconfirm = c1(TK, Mrand, ...)
+Master<-Slave:Srand
+Master<-Master:Prüfe Sconfirm = c1(TK, Srand, ...)                       
