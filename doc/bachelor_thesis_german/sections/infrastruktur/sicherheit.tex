@@ -1,0 +1,12 @@
+% BLE unsicher Verweis Sicherheit KApitel
+% eigene kryptographische Implementierungen zu aufwendig, um Sicherheit zu garantieren
+% TLS weit verbreitetes Protokoll für Sicherheit des Transports
+    % (weiter-)entwicklung durch ietf,
+    % hohe Sicherheit (Bezug auf Infrastruktur einleitung nehmen, Authentifikation/Authentifizierung (beidseitig möglich), Ende-zu-Ende verschlüsselung (Vertraulichkeit), Datenintegrität, Auswahl der Ciphersuites kann begrenzt werden -> Ciphersuites mit niedrigerer Sicherheit aussortieren)
+    % bezieht sich nicht nur auf Sockets sondern ist unabhängig vom Transport
+    % durch weite Verbreitung -> viele APIs
+% Privacy Feature nutzen?
+% Verzicht auf BLE security da nur overhead und leistung
+
+BLE bietet einige Sicherheitsfunktionen, die durch den Security Manager bzw. das Security Manager Protocol (siehe Sektion \ref{sec: le sm}) zur Verfügung gestellt werden. Jedoch sind diese nicht ausreichend, um diese Infrastruktur zu schützen. Zudem sind sie abhängig von den Ein- und Ausgabeoptionen, die die kommunizierenden Geräte (Mikrocontroller und Smartphone) unterstützen. In Sektion \ref{sec: le security} werden die konkreten Mängel hervorgehoben. Dabei ist eine der kritischsten Sicherheitslücken die nicht vorhandene Sicherheit auf Anwendungsebene, die für die Infrastruktur unbedingt bestehen muss, da sonst im System des Smartphones Software Dritter auf die Daten der eigenen Anwendung zugreifen kann.
+\\\\

@@ -1,6 +1,6 @@
 Obwohl Bluetooth LE mit dem Privacy Feature und dem Security Manager (vor allem ab Bluetooth 4.2) einige Optionen für eine sichere Infrastruktur bietet, bleiben Probleme offen, die betrachtet werden müssen.
 \\\\
-Ein erfolgreicher Angriff auf zwei Geräte, die mittels BLE verschlüsselt kommunizieren, in Form von passivem Abhören oder eines MITM-Angriffs kann beim Aufbau einer Verbindung, also dem Pairing (siehe Sektion \ref{sec: le sm}), auftreten, da hier die Schlüssel ausgetauscht werden. In Tabelle \ref{tab: le sicherheit zusammenfassung}
+Ein erfolgreicher Angriff auf zwei Geräte, die mittels BLE verschlüsselt kommunizieren, in Form von passivem Abhören oder eines MITM-Angriffs kann beim Aufbau einer Verbindung, also dem Pairing (siehe Sektion \ref{sec: le sm}) auftreten, da hier die Schlüssel ausgetauscht werden. In Tabelle \ref{tab: le sicherheit zusammenfassung}
 wird dargestellt welchen Schutz die Pairing-Methoden des LE Legacy Pairing und des LE Secure Connections Pairing gegen passives Abhören und MITM-Angriffe bieten.
 
 \begin{table}
@@ -45,7 +45,7 @@ Ein weiteres Problem ist die Sicherheit auf der Anwendungsebene. Unterstützt ei
 % QUELLE Spec. 4.0 S. 196, 5.2.3 Encryption
 % QUELLE Spec. 4.0 S. 2285, 1 ENCRYPTION AND AUTHENTICATION OVERVIEW
 
-Ein Beispiel für ein solches System ist das Betriebssystem Android von der Open Handset Alliance. Auf Androids Webpräsenz für BLE wird darauf hingewiesen, dass BLE keine Sicherheit auf Anwendungsebene liefert: "When a user pairs their device with another device using BLE, the data that's communicated between the two devices is accessible to all apps on the user's device" \cite{AndroidAppLayerSec}.
+Ein Beispiel für ein solches System ist das Betriebssystem Android von der Open Handset Alliance. Auf Androids Webpräsenz für BLE wird darauf hingewiesen, dass BLE keine Sicherheit auf Anwendungsebene liefert: "`When a user pairs their device with another device using BLE, the data that's communicated between the two devices is accessible to all apps on the user's device"' \cite{AndroidAppLayerSec}.
 % QUELLE ZITAT https://developer.android.com/guide/topics/connectivity/bluetooth-le Bluetooth low energy -> Caution
 
 Den Beweis dafür, dass Daten, die durch BLE über den Link Layer verschlüsselt oder unverschlüsselt übertragen werden, von anderen Apps ausgelesen werden können, liefert eine Studie der Royal Holloway University of London \cite{RoyalHollowayUniversity}. Diese zeigt, wie innerhalb des Android Betriebssystems eine fremde Anwendung Daten über das Protokoll ATT bzw. GATT 

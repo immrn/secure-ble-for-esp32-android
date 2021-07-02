@@ -1,6 +1,10 @@
-Wie in Abbildung X
-% TODO BILD VERWEIS letztes Bild aus überblick
-zu sehen ist, umfasst der Controller die Schichten Physical Layer (PHY) und Link Layer (LL, auch Logical Layer genannt). Der Phyical Layer unterteilt sich weiter in die Physical Channels und die Phyical Links, während der Link Layer sich in Logical Transports und Logical Links aufteilt. In den Schichten bzw. ihren Untergliederungen wird definiert, wie Anwenderdaten, Advertisements und Kontrollsignale in Form von Unicasts bzw. Broadcasts übertragen werden.
+Wie in Abbildung \ref{fig: controller architektur} zu sehen ist, umfasst der Controller die Schichten Physical Layer (PHY) und Link Layer (LL). Über dem Controller ist der Logical Link Control And Adaption Protocol (L2CAP) Layer in grau dargestellt, da er nicht Teil des Controllers sondern des Hosts ist.
 
-% TODO ABBILDUNG physical layer, physical channel/transports, link layer, locigal transports/links
-% TODO evtl zum Bild anmerken, dass L2CAP nicht zum Controller sondern zum Host gehört
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{graphics/controller_layers.pdf}
+    \caption[Architektur des Physical Layers und des Link Layers]{Architektur des Physical Layers und des Link Layers \cite{BtSpec4.0_fig_145}} \cite{BtSpec4.0_fig_151}
+    \label{fig: controller architektur}
+\end{figure}
+
+Der Phyical Layer unterteilt sich weiter in die Physical Channels und die Phyical Links, während der Link Layer sich in Logical Transports und Logical Links aufteilt. In den Schichten bzw. ihren Untergliederungen wird definiert, wie Nutzdaten und Kontrollsignale innerhalb Verbindungen bzw. Advertisements übertragen werden. Bezüglich des L2CAP Layers werden Nutzdaten entweder in Form eines Unicasts oder Broadcasts übertragen.

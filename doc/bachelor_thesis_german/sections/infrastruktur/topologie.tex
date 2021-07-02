@@ -1,15 +1,13 @@
-Die Topologie der Infrastruktur beschränkt sich auf das Minimum an Kommunikationsparteien und ist unabhängig von der Anwendung.\\
+Die Topologie der Infrastruktur beschränkt sich auf das Minimum an Kommunikationsparteien. Dem Thema zufolge sollen ein Mikrocontroller und ein Smartphone sicher Daten austauschen. Um dies zu bewerkstelligen, wird über den Transport der Daten durch Bluetooth Low Energy (BLE) das Protokoll TLS verwendet (siehe Sektion \ref{sec: infra sicherheit}). Dementsprechend ist, wie in Abb. \ref{fig: infra topologie} zu sehen, neben dem Mikrocontroller und dem Smartphone eine Zertifizierungsstelle notwendig. In welcher Form diese auftritt ist von der Anwendung abhängig.
+\\\\
 
-% TODO BILD topologie infratruktur mikrocontroller, smartphone, CA
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{graphics/infra_topologie.pdf}
+    \caption[Topologie der Infrastruktur]{Topologie der Infrastruktur}
+    \label{fig: infra topologie}
+\end{figure}
 
-Dem Thema zufolge sollen ein Mikrocontroller und ein Smartphone sicher Daten austauschen. Um dies zu bewerkstelligen, wird über den Transport der Daten durch Bluetooth Low Energy (BLE) das Verschlüsselungsprotokoll TLS verwendet (siehe Sektion X). 
-% TODO SEKTION VERWEIS Infrakstruktur->Sicherheit
-Dementsprechend ist, wie in Abbildung X zu sehen
-% TODO BILD VERWEIS topologie infrastruktur mikrocontroller, smartphone, CA
-, neben dem Mikrocontroller und dem Smartphone eine Zertifizierungsstelle notwendig. In welcher Form diese auftritt ist von der Anwendung abhängig.
-
-Für einen seriösen Anwendungsfall sollte die Zertifizierungsstelle in Form eines Servers existieren, der dem Mikrocontroller und Smartphone in regelmäßigen Abständen (z.B. jährlich) jeweils ein Zertifikat ausstellt. Mit diesen Zertifikaten und der Kenntnis über das Root-Zertifikat können Mikrocontroller und Smartphone sich gegenseitig authentifizieren und somit die Grundlage für eine sichere Kommunikation bilden.
-
-Beispielsweise könnte es für einen privaten Anwendungsfall ausreichend sein, die Zertifizierungsstelle nicht als dauerhaft betriebenen Server darzustellen, sondern lediglich ein Root-Zertifikat zu erstellen und mit diesem dem Mikrocontroller und Smartphone jeweils ein digitales Zertifikat auszustellen.
-
-Die Rolle der Partei, die die Zertifikate für Mikrocontroller und Smartphone austellt muss nicht zwingend eine Zertifizierungsstelle sein, sondern könnte auch eine Entität sein, der von einer Zertifizierungsstelle ein Zwischenzertifikat ausgestellt wurde.
+Für einen öffentlich zugänglichen Anwendungsfall sollte die Zertifizierungsstelle dem Mikrocontroller und Smartphone in regelmäßigen Abständen (z.B. jährlich) jeweils ein Zertifikat ausstellen. Mit diesen Zertifikaten und der Kenntnis über das Root-Zertifikat (das Zertifikat der Zertifizierungsstelle) können Mikrocontroller und Smartphone sich gegenseitig authentifizieren und somit die Grundlage für eine sichere Kommunikation bilden.
+\\\\
+Für einen einfachen privaten Anwendungsfall, in dem z.B. nur ein einziger Mikrocontroller und ein einziges Smartphone diese Infrastruktur verwenden, könnte es genügen die Schlüsselpaare und Zertifikate auf einer dritten Instanz (z.B. einen Personal Computer) zu erstellen und über eine sichere Verbindung (z.B. eine direkte Kabelverbindung) an den Mikrocontroller und das Smartphone zu übertragen.

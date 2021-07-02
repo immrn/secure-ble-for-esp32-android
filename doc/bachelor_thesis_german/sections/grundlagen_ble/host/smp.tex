@@ -3,7 +3,7 @@ Der Security Manager (SM) bzw. das Security Manager Protocol (SMP) ist dafür zu
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{graphics/smp_in_bt.pdf}
-    \caption[Beziehungen des Security Managers zu anderen Komponenten]{Beziehungen des Security Managers zu anderen Komponenten \cite{BtSpec4.0_fig_1958}}
+    \caption[Beziehungen des Security Managers zu anderen Host-Komponenten]{Beziehungen des Security Managers zu anderen Host-Komponenten; in Anlehnung an \cite{BtSpec4.0_fig_1958}}
     \label{fig: smp in bt}
 \end{figure}
 % QUELLE Spec 4.0 S. 1958
@@ -64,9 +64,8 @@ Anhand der ausgetauschten Informationen aus der ersten Phase wird in der zweiten
 Da das Pairing (speziell Phase 2) für LE in der Bluetooth-Version 4.0 funktionale Unterschiede zum Pairing für LE ab Version 4.2 aufweist, wird das Pairing für LE in Version 4.0 als \textbf{LE Legacy Pairing} und das Pairing für LE ab Version 4.2 als \textbf{LE Secure Connections Pairing} bezeichnet. Aus Sicht des Nutzers sind diese jedoch gleich und jede Bluetooth-Version, die LE unterstützt, unterstützt das LE Legacy Pairing. Im Gegensatz zum LE Secure Connections Pairing bietet LE Legacy Pairing für die Methoden Just Works und Passkey Entry keinen Schutz vor passivem Abhören während des Pairings, da LE Secure Connections Elliptic Curve Diffie-Hellman (ECDH) für den Schlüsselaustausch nutzt und LE Legacy Pairing nicht. \cite{BtSpec4.2_248}
 % QUELLE Spec 4.2 S. 248 5.4.1 Association Models
 \\\\
-Haben beide Geräte OOB-Authentifizierungsdaten für das LE Legacy Pairing, wird unabhängig von der jeweiligen MITM-Flag die Methode OOB gewählt. In LE Secure Connections Pairing wird ebenso verfahren, nur dass hier nicht die OOB-Flag beider Geräte gesetzt sein müssen (aber können), da eine gesetzte OOB-Flag genügt. Ist die MITM-Flag beider Geräte nicht gesetzt, wird die Methode Just Works ausgeführt. Anderenfalls werden die Ein- und Ausgabemöglichkeiten der Geräte für die Wahl der Methode einbezogen (siehe Anhang Tabelle X).
-% TODO ANHANG TABELLE VERWEIS
-% TODO ANHANG TABELLE Spec 4.2 S. 2302, Table 2.8 (Achtung: Seitenumbruch)
+Haben beide Geräte OOB-Authentifizierungsdaten für das LE Legacy Pairing, wird unabhängig von der jeweiligen MITM-Flag die Methode OOB gewählt. In LE Secure Connections Pairing wird ebenso verfahren, nur dass hier nicht die OOB-Flag beider Geräte gesetzt sein müssen (aber können), da eine gesetzte OOB-Flag genügt. Ist die MITM-Flag beider Geräte nicht gesetzt, wird die Methode Just Works ausgeführt. Anderenfalls werden die Ein- und Ausgabemöglichkeiten der Geräte für die Wahl der Methode einbezogen entsprechend \cite{BtSpec4.2_tab_2302-2303}.
+% Verweis TABELLE Spec 4.2 S. 2302 f., Table 2.8
 
 \subparagraph{Pairing Methoden} \mbox{} \vspace{0.2cm} \\
 Bei der \textbf{Numeric Comparison} wird dem Nutzer auf beiden Geräten jeweils eine zufällig generierte sechsstellige Dezimalzahl angezeigt. Diese muss der Nutzer vergleichen und im Falle der Übereinstimmung auf beiden Geräten bestätigen oder anderenfalls ablehnen. Somit kann der Nutzer unabhängig von der Namensgegebung der Geräte sicherstellen, die richtigen Geräte ausgewählt zu haben. Zudem bietet diese Methode Schutz vor MITM-Angriffen. Außenstehende, die Kenntnis über diese Zahl gewonnen haben, können laut \cite{BtSpec4.2_244-245} damit keinen Vorteil zur Entschlüsselung der zwischen den beiden Geräten ausgetauschten Daten erlangen, da die Zahl nicht als Eingabe zur Generierung eines Schlüssels verwendet wird.
@@ -108,6 +107,8 @@ Ebenso führt das antwortende Gerät (Slave) diese Schritte durch, wobei \textit
     \label{fig: austausch vor stk generierung}
 \end{figure}
 
+Master und Slave tauschen \textit{Mconfirm} und \textit{Sconfirm} aus. Danach überträgt der Master \textit{Mrand}, damit der Slave \textit{Mconfirm} entsprechend Gl. \ref{eq: mconfirm} berechnen und so den empfangenen \textit{Mconfirm} verifizieren kann. Nach einer erfolgreichen Prüfung von \textit{Mconfirm} überträgt der Slave \textit{Srand}, damit der Master \textit{Sconfirm} analog zu Gl. \ref{eq: mconfirm} berechnen und somit den empfangenen \textit{Sconfirm} verifizieren kann. Wenn einer der Bestätigungswerte (\textit{Mconfirm}, \textit{Sconfirm}) nicht erfolgreich verifiziert wird, wird die Verbindung sofort beendet.
+\\\\
 Anschließend wird der STK mit der Funktion s1 \cite{BtSpec4.2_2290} 
 % QUELLE verweis auf Spec 4.2 S. 2290 2.2.4 Key generation function s1 for LE Legacy Pairing
 entsprechend Gl \ref{eq: stk} \cite{BtSpec4.2_2305-2306} berechnet.

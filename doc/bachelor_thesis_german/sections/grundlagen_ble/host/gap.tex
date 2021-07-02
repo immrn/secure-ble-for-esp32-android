@@ -7,8 +7,7 @@ Für LE existieren die vier Rollen: Broadcaster, Observer, Peripheral und Centra
 Jedes Gerät befindet sich entweder im Non-discoverable Mode, in dem es nicht von anderen Geräten entdeckt werden kann, oder im General Discoverable Mode bzw. im Limited Discoverable Mode, in denen es entdeckbar ist. Im Letzteren ist ein Gerät nur für eine bestimmte Dauer entdeckbar. Geräte, die andere Geräte entdecken sollen, müssen die General Discovery Procedure bzw. Limited Discovery Procedure ausführen. \cite{BtSpec4.0_1697}
 % QUELLE Spec 4.0 S. 1697 9.2 Discovery Modes And Procedures
 
-Um Verbindungen und deren Aufbau zu steuern, gibt es mehrere Modi und Prozeduren, von denen einige in der Tabelle X zusammengefasst werden.
-% TODO TABELLE VERWEIS
+Um Verbindungen und deren Aufbau zu steuern, gibt es mehrere Modi und Prozeduren, von denen einige in der Tabelle \ref{tab: modi prodzeduren gap} zusammengefasst werden.
 
 \begin{table}
     \begin{tabularx}{\textwidth}{|p{4.5cm}|X|}
@@ -29,26 +28,28 @@ Um Verbindungen und deren Aufbau zu steuern, gibt es mehrere Modi und Prozeduren
     \hline
     \end{tabularx}
     \caption[Modi und Prozeduren für Verbindungen (GAP)]{Modi und Prozeduren für Verbindungen \cite{BtSpec4.0_1704-1718}}
+    \label{tab: modi prodzeduren gap}
 \end{table}
 % QUELLE Spec. 4.0 S. 1704 - 1718 9.3 Connection Modes and Procedures
 
-Bonding ist das Speichern von Sicherheits- und Identitätsinformationen wie dem Identity Resolving Key (IRK) oder dem Long Term Key (LTK). Der IRK generiert zufällige Adressen oder löst diese auf. Der LTK wird beim Pairing generiert und dient zur Verschlüsselung einer Verbindung (siehe Sektion X). 
-% TODO SEKTION VERWEIS Security Manager
+Bonding ist das Speichern von Sicherheits- und Identitätsinformationen wie dem Identity Resolving Key (IRK) oder dem Long Term Key (LTK). Der IRK generiert zufällige Adressen oder löst diese auf. Der LTK wird beim Pairing generiert und dient zur Verschlüsselung einer Verbindung (siehe Sektion \ref{sec: le sm}).
 
 Ein Gerät im Non-Bondable Mode erlaubt es nicht einen sogenannten Bond mit einem Peer-Gerät zu erstellen. Dagegen erlaubt dies der Bondable Mode. Haben ein Central und ein Periphal zusammen einen Bond erstellt, können sie beim erneuten Verbinden mithilfe der gespeicherten Sicherheits- und Identitätsinformationen das Pairing überspringen. Broadcaster und Obersever sollten das Bonding nicht unterstützen. \cite{BtSpec4.2_2060-2062}
 % QUELLE Spec. 4.2 S. 2060 - 2062, 9.4 BONDING MODES AND PROCEDURES
 
 \paragraph{Sicherheitsaspekte} \mbox{} \vspace{0.2cm} \\
+\label{sec: gap sicherheit}
 
 Zusätzlich verfügt GAP über Sicherheitsaspekte, die unteranderem das Privacy Feature und die Random Device Address enthalten. Das Privacy Feature erschwert das Verfolgen eines Gerätes durch das Ändern der Adresse des Gerätes und wird nur in den Modi und Prozeduren für Verbindungen genutzt, falls es angewandt werden soll.\\\\
 % TODOOPT QUELLE Spec. 4.0 S. 197, 5.2.5 Privacy Feature
 
-Entsprechend Abb. X existieren verschiedene Arten von Bluetooth-Adressen.
-% TODO BILD VERWEIS
+Entsprechend Abb. \ref{fig: bt adressen arten} existieren verschiedene Arten von Bluetooth-Adressen.
+
 \begin{figure}[hbt!]
     \centering
     \includegraphics{graphics/BT_Adressen_Baum.pdf}
     \caption{Arten der Bluetooth-Adressen}
+    \label{fig: bt adressen arten}
 \end{figure}
 
 Die öffentliche Bluetooth-Adresse ist die vom Hersteller bzw. IEEE festgelegte Adresse mit einer Länge von 48 Bit. Die 24 Bit mit dem höchsten Stellenwert bilden die von der IEEE vergebene Hersteller-ID und die 24 Bit mit dem niedrigsten Stellenwert bilden die vom Hersteller festgelegte Geräts-ID. \cite{BtSpec4.2_2576}
