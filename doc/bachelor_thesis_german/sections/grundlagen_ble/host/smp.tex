@@ -1,4 +1,4 @@
-Der Security Manager (SM) bzw. das Security Manager Protocol (SMP) ist dafür zuständig eine sichere Verbindung zwischen zwei Geräten (Master und Slave) aufzubauen. Dies umfasst im Wesentlichen das Pairing, welches zur Authentifizierung und Generierung eines Schlüssels dient, und die Verteilung von Schlüsseln. Entsprechend der Abb. \ref{fig: smp in bt} lässt sich der Security Manager bzw. das SMP in die BLE-Architektur einordnen.
+Der Security Manager (SM) bzw. das Security Manager Protocol (SMP) ist dafür zuständig, eine sichere Verbindung zwischen zwei Geräten (Master und Slave) aufzubauen. Dies umfasst im Wesentlichen das Pairing, das zur Authentifizierung und Generierung eines Schlüssels dient, und die Verteilung von Schlüsseln. Entsprechend der Abb. \ref{fig: smp in bt} lässt sich der Security Manager bzw. das SMP in die BLE-Architektur einordnen.
 
 \begin{figure}[H]
     \centering
@@ -39,9 +39,9 @@ listen die entsprechenden Bezeichnungen dieser Möglichkeiten auf.
     \hline
     \textbf{Ausgabemöglichkeiten} & \textbf{Beschreibung} \\
     \hline
-    Keine Ausgabe & Gerät kann keine 6-stellige Dezimalzahl dem Nutzer anzeigen bzw. kommunizieren \\
+    Keine Ausgabe & Gerät kann dem Nutzer keine sechsstellige Dezimalzahl anzeigen bzw. kommunizieren \\
     \hline
-    Numerische Ausgabe & Gerät kann eine 6-stellige Dezimalzahl dem Nutzer anzeigen bzw. kommunizieren \\
+    Numerische Ausgabe & Gerät kann dem Nutzer eine sechsstellige Dezimalzahl anzeigen bzw. kommunizieren \\
     \hline
     \end{tabularx}
     \caption[Ausgabemöglichkeiten eines Gerätes]{Ausgabemöglichkeiten eines Gerätes \cite{BtSpec4.0_1965_b}}
@@ -49,22 +49,20 @@ listen die entsprechenden Bezeichnungen dieser Möglichkeiten auf.
 \end{table}
 % QUELLE für Tabellen: Spec 4.0 S. 1965 Table 2.1 und Table 2.2
 
-Desweiteren tauschen die Geräte in der ersten Phase Informationen darüber aus, ob eine Authentifizierung zum Schutz vor einem Man-In-The-Middle-Angriff nötig ist (MITM Flag), und ob Daten für die Authentifizierung über die Pairing-Methode Out Of Band (OOB), d.h. mittels einer anderen Technologie (z.B. Near Field Communication), übertragen werden können (OOB Flag). Außerdem werden die minimalen und maximalen Größen für die Schlüssel ausgetauscht, die sich in 8 Bit großen Schritten zwischen 56 Bit (7 Byte) und 128 Bit (16 Byte) befinden. Dabei wird der kleinere Wert beider maximaler Größen übernommen. Falls die beiden Spannen sich nicht schneiden, wird das Pairing abgebrochen.
+Desweiteren tauschen die Geräte in der ersten Phase Informationen darüber aus, ob eine Authentifizierung zum Schutz vor einem Man-In-The-Middle-Angriff nötig ist (MITM Flag), und ob Daten für die Authentifizierung über die Pairing-Methode Out Of Band (OOB), d.h. mittels einer anderen Technologie (z.B. Near Field Communication), übertragen werden können (OOB Flag). Außerdem werden die minimalen und maximalen Größen für die Schlüssel ausgetauscht, die sich in 8 Bit großen Schritten zwischen 56 Bit (7 Byte) und 128 Bit (16 Byte) befinden. Dabei wird das Minimum beider maximaler Größen übernommen. Falls die beiden Spannen sich nicht überschneiden, wird das Pairing abgebrochen.
 
 \paragraph{Pairing: Phase 2} \mbox{} \vspace{0.2cm} \\
 Anhand der ausgetauschten Informationen aus der ersten Phase wird in der zweiten Phase entschieden, welche der folgenden Methoden zur Generierung des Short Term Key (STK) bzw. Long Term Key (LTK) zu verwenden ist:
-
 \begin{itemize}
     \item{Numeric Comparison (für LE erst ab Bluetooth-Version 4.2)}
     \item{Just Works}
     \item{Out of Band (OOB)}
     \item{Passkey Entry}
 \end{itemize}
-
-Da das Pairing (speziell Phase 2) für LE in der Bluetooth-Version 4.0 funktionale Unterschiede zum Pairing für LE ab Version 4.2 aufweist, wird das Pairing für LE in Version 4.0 als \textbf{LE Legacy Pairing} und das Pairing für LE ab Version 4.2 als \textbf{LE Secure Connections Pairing} bezeichnet. Aus Sicht des Nutzers sind diese jedoch gleich und jede Bluetooth-Version, die LE unterstützt, unterstützt das LE Legacy Pairing. Im Gegensatz zum LE Secure Connections Pairing bietet LE Legacy Pairing für die Methoden Just Works und Passkey Entry keinen Schutz vor passivem Abhören während des Pairings, da LE Secure Connections Elliptic Curve Diffie-Hellman (ECDH) für den Schlüsselaustausch nutzt und LE Legacy Pairing nicht. \cite{BtSpec4.2_248}
+Da das Pairing (speziell Phase 2) für LE in der Bluetooth-Version 4.0 funktionale Unterschiede zum Pairing für LE ab Version 4.2 aufweist, wird das Pairing für LE in Version 4.0 als \textbf{LE Legacy Pairing} und das Pairing für LE ab Version 4.2 als \textbf{LE Secure Connections Pairing} bezeichnet. Aus Sicht des Nutzers sind beide Verfahren jedoch gleich und jede Bluetooth-Version, die LE unterstützt, unterstützt das LE Legacy Pairing. Im Gegensatz zum LE Secure Connections Pairing bietet LE Legacy Pairing für die Methoden Just Works und Passkey Entry keinen Schutz vor passivem Abhören während des Pairings, da LE Secure Connections Elliptic Curve Diffie-Hellman (ECDH) für den Schlüsselaustausch nutzt und LE Legacy Pairing nicht. \cite{BtSpec4.2_248}
 % QUELLE Spec 4.2 S. 248 5.4.1 Association Models
 \\\\
-Haben beide Geräte OOB-Authentifizierungsdaten für das LE Legacy Pairing, wird unabhängig von der jeweiligen MITM-Flag die Methode OOB gewählt. In LE Secure Connections Pairing wird ebenso verfahren, nur dass hier nicht die OOB-Flag beider Geräte gesetzt sein müssen (aber können), da eine gesetzte OOB-Flag genügt. Ist die MITM-Flag beider Geräte nicht gesetzt, wird die Methode Just Works ausgeführt. Anderenfalls werden die Ein- und Ausgabemöglichkeiten der Geräte für die Wahl der Methode einbezogen entsprechend \cite{BtSpec4.2_tab_2302-2303}.
+Verfügen beide Geräte über OOB-Authentifizierungsdaten für das LE Legacy Pairing, wird unabhängig vom jeweiligen MITM-Flag die Methode OOB gewählt. In LE Secure Connections Pairing wird ebenso verfahren, nur dass hier nicht die OOB-Flags beider Geräte gesetzt sein müssen (aber können), da ein gesetztes OOB-Flag genügt. Sind die MITM-Flags beider Geräte nicht gesetzt, wird die Methode Just Works ausgeführt. Anderenfalls werden die Ein- und Ausgabemöglichkeiten der Geräte entsprechend \cite{BtSpec4.2_tab_2302-2303} in die Wahl der Methode einbezogen.
 % Verweis TABELLE Spec 4.2 S. 2302 f., Table 2.8
 
 \subparagraph{Pairing Methoden} \mbox{} \vspace{0.2cm} \\
@@ -77,17 +75,16 @@ Bei der \textbf{Numeric Comparison} wird dem Nutzer auf beiden Geräten jeweils 
 \textbf{Out of Band} ist die Nutzung einer anderen Technologie (z.B. Near Field Communication), um Geräte zu entdecken oder um kryptographische Informationen für den Pairing-Prozess auszutauschen. Dabei sollte die Technologie Schutz vor MITM-Angriffen bieten. \cite{BtSpec4.2_246}
 % QUELLE Spec 4.2 S. 246 5.2.4.3 Out of Band
 
-Die Methode \textbf{Passkey Entry} definiert, dass ein Gerät die zufällig generierte sechstellige Dezimalzahl ausgibt und der Nutzer diese auf dem anderen Gerät eingeben muss. Ein Schutz gegen MITM-Angriffe existiert, da diese nur mit einer Wahrscheinlichtkeit von 0,000001 für jede Durchführung der Methode möglich sind. Schutz gegen passives Abhören bietet Passkey Entry nur in LE Secure Connections Pairing und nicht in LE Legacy Pairing. \cite{BtSpec4.2_246-247} \cite{BtSpec4.2_2304}
+Die Methode \textbf{Passkey Entry} definiert, dass ein Gerät die zufällig generierte sechstellige Dezimalzahl ausgibt und der Nutzer sie auf dem anderen Gerät eingeben muss. Ein Schutz gegen MITM-Angriffe ist gegeben, da diese nur mit einer Wahrscheinlichtkeit von 0,0001\% für jede Durchführung der Methode möglich sind. Schutz gegen passives Abhören bietet Passkey Entry nur in LE Secure Connections Pairing und nicht in LE Legacy Pairing. \cite{BtSpec4.2_246-247} \cite{BtSpec4.2_2304}
 % QUELLE Spec 4.2 S. 246 f. 5.2.4.4 Passkey Entry
 % QUELLE Spec. 4.2 S. 2304 2.3.5.3 LE Legacy Pairing - Passkey Entry
 
 \subparagraph{LE Legacy Pairing: Schlüssel und deren Generierung} \mbox{} \vspace{0.2cm} \\
-Beim LE Legacy Pairing zweier Geräte generieren beide einen 128 Bit langen Temporary Key (TK), der bei der Authentifizierung genutzt wird, um den STK zu generieren und die Verbindung zu verschlüsseln. In Just Works wird der TK auf null gesetzt. Bei der Methode Passkey Entry ist der TK die besagte zufällig generierte sechstellige Dezimalzahl, die bereits mit 20 Bit dargestellt werden kann, weswegen die restlichen Bit des TK auf null gesetzt werden müssen. Dagegen kann bei OOB auf diese Einschränkung verzichtet werden, wodurch der TK wahrhaftig eine Länge von 128 Bit besitzt.
-
-Das Gerät, welches das Pairing einleitet (Master), generiert eine zufällige 128 Bit große Nummer \textit{Mrand} und ermittelt den 128 Bit großen Bestätigungswert \textit{Mconfirm} mit der Confirm Value Generation Function c1 \cite{BtSpec4.2_2288}. 
+Beim LE Legacy Pairing zweier Geräte generieren beide einen 128 Bit langen Temporary Key (TK), der bei der Authentifizierung genutzt wird, um den STK zu generieren und die Verbindung zu verschlüsseln. In Just Works wird der TK auf null gesetzt. Bei der Methode Passkey Entry ist der TK die besagte zufällig generierte sechstellige Dezimalzahl, die bereits mit 20 Bit dargestellt werden kann, weswegen die restlichen Bit des TK auf null gesetzt werden müssen. Dagegen kann bei OOB auf diese Einschränkung verzichtet werden, wodurch der TK tatsächlich eine Länge von 128 Bit aufweist.
+\\\\
+Das Gerät, welches das Pairing einleitet (Master), generiert eine zufällige 128 Bit lange Nummer \textit{Mrand} und ermittelt den gleichlangen Bestätigungswert \textit{Mconfirm} mit der Confirm Value Generation Function c1 \cite{BtSpec4.2_2288}. 
 % QUELLE Spec. 4.2 S. 2288 2.2.3 Confirm value generation function c1 for LE Legacy Pairing
-Zur Berechnung von \textit{Mconfirm} erhält die Funktion c1 folgende Eingabewerte entsprechend Gl. \ref{eq: mconfirm} \cite{BtSpec4.2_2305-2306}.
-
+Zur Berechnung von \textit{Mconfirm} erhält die Funktion c1 folgende Eingabewerte entsprechend Gl. \ref{eq: mconfirm} \cite{BtSpec4.2_2305-2306}:
 \begin{equation}
 \begin{split}
     \text{Mconfirm} = \text{c1}(& \text{TK, Mrand,} \\
@@ -97,8 +94,7 @@ Zur Berechnung von \textit{Mconfirm} erhält die Funktion c1 folgende Eingabewer
 \end{split}
     \label{eq: mconfirm}
 \end{equation}
-
-Ebenso führt das antwortende Gerät (Slave) diese Schritte durch, wobei \textit{Mrand} als \textit{Srand} bezeichnet wird und \textit{Mconfirm} als \textit{Sconfirm}. Die Eingabewerte der Funktion c1 zur Berechnung von \textit{Sconfirm}sind demnach analog zu denen von \textit{Mconfirm}. Danach findet entsprechend Abb. \ref{fig: austausch vor stk generierung} folgender Austausch statt.
+Ebenso führt das antwortende Gerät (Slave) diese Schritte durch, wobei \textit{Mrand} als \textit{Srand} bezeichnet wird und \textit{Mconfirm} als \textit{Sconfirm}. Die Eingabewerte der Funktion c1 zur Berechnung von \textit{Sconfirm} sind demnach analog zu denen von \textit{Mconfirm}. Danach findet gemäß Abb. \ref{fig: austausch vor stk generierung} folgender Austausch statt:
 
 \begin{figure}[H]
     \centering
@@ -118,29 +114,32 @@ entsprechend Gl \ref{eq: stk} \cite{BtSpec4.2_2305-2306} berechnet.
     \label{eq: stk}
 \end{equation}
 
-Demnach kann bei der Methode Passkey Entry kein ausreichender Schutz gegen passives Abhören geboten werden, da der TK nur wenig mögliche Werte annehmen kann. Ist die vereinbarte Schlüsselgröße kleiner als 128 Bit, werden die überschüssigen Bit beginnend bei dem Bit mit dem höchsten Stellenwert auf null gesetzt. Der STK wird nun zur Verschlüsselung der Verbindung genutzt. \cite{BtSpec4.2_2305-2306}
+Demnach kann bei der Methode Passkey Entry kein ausreichender Schutz gegen passives Abhören geboten werden, da der TK nur wenig mögliche Werte annehmen kann. Ist die vereinbarte Schlüsselgröße kleiner als 128 Bit, werden die überschüssigen Bit beginnend bei dem MSB auf null gesetzt. Der STK wird nun zur Verschlüsselung der Verbindung genutzt. \cite{BtSpec4.2_2305-2306}
 % QUELLE Spec. 4.2 S. 2305 f. 2.3.5.5 LE Legacy Pairing Phase 2
 
 \subparagraph{LE Secure Connections Pairing: Schlüssel und deren Generierung} \mbox{} \vspace{0.2cm} \\
-Beim LE Secure Connections Pairing wird ein Long Term Key (LTK) erstellt. Zuvor erstellen beide Geräte jeweils ein ECDH-Schlüsselpaar (PK - Public Key, SK - Private Key) und tauschen ihre Public Keys aus. Danach berechnet jedes Gerät den Diffie-Hellman-Schlüssel aus seinem Private Key und dem Public Key des Anderen. Durch den Diffie-Hellman-Schlüssel kennen beide Parteien ein gemeinsames Geheimnis, mit dem sie den weiteren Datenaustausch zur Authentifizierung verschlüsseln können. Die Authentifizierung ist notwendig, da der ECDH-Schlüsselaustausch zwar resistent gegen passives Abhören ist, jedoch nicht gegen MITM-Angriffe. \cite{BtSpec4.2_2307}
+Beim LE Secure Connections Pairing wird ein Long Term Key (LTK) erstellt. Zuvor generieren beide Geräte jeweils ein ECDH-Schlüsselpaar (PK - Public Key, SK - Private Key) und tauschen ihre Public Keys aus. Danach berechnet jedes Gerät den Diffie-Hellman-Schlüssel aus seinem Private Key und dem Public Key des Gegenübers. Durch den Diffie-Hellman-Schlüssel kennen beide Parteien ein gemeinsames Geheimnis, mit dem sie den weiteren Datenaustausch zur Authentifizierung verschlüsseln können. Die Authentifizierung ist notwendig, da der ECDH-Schlüsselaustausch zwar resistent gegen passives Abhören ist, jedoch nicht gegen MITM-Angriffe. \cite{BtSpec4.2_2307}
 % QUELLE Spec. 4.2 S. 2307 2.3.5.6.1 Public Key Exchange
 
-Diese Authentifizierung wird mit den Pairing Methoden Numeric Comparison, Just Works, OOB und Passkey Entry ermöglicht. Jedoch unterscheiden diese sich aus funktionaler Sicht (nicht aus Nutzersicht) zum LE Legacy Pairing durch komplexere Verfahren. Letztendlich lässt sich für die vier Pairing-Methoden Folgendes zusammenfassen. Numeric Comparison signalisiert dem Nutzer mit einer Wahrscheinlichkeit von 0,999999 einen stattfindenden MITM-Angriff \cite{BtSpec4.2_2309}. 
+Diese Authentifizierung wird mit den Pairing Methoden Numeric Comparison, Just Works, OOB und Passkey Entry ermöglicht. Jedoch unterscheiden diese sich aus funktionaler Sicht (nicht aus Nutzersicht) vom LE Legacy Pairing durch komplexere Verfahren. Letztendlich lässt sich für die vier Pairing-Methoden Folgendes zusammenfassen: 
+\begin{itemize}
+    \item Numeric Comparison signalisiert dem Nutzer mit einer Wahrscheinlichkeit von 99,9999\% einen stattfindenden MITM-Angriff \cite{BtSpec4.2_2309}
 % QUELLE Spec. 4.2 S. 2309, 2.3.5.6.2 Authentication Stage 1 – Just Works or Numeric Comparison
-Just Works bietet keinen Schutz vor einem MITM-Angriff \cite{BtSpec4.2_245}. 
+    \item Just Works bietet keinen Schutz vor einem MITM-Angriff \cite{BtSpec4.2_245} 
 % QUELLE Spec. 4.2 S. 245, 5.2.4.2 Just Works
-Ein MITM-Angriff während des Passkey Entry gelingt nur mit einer Wahrscheinlichkeit von 0,000001 \cite{BtSpec4.2_2311}. 
+    \item Ein MITM-Angriff während des Passkey Entry gelingt nur mit einer Wahrscheinlichkeit von 0,0001\% \cite{BtSpec4.2_2311}
 % QUELLE Spec. 4.2 S. 2311, 2.3.5.6.3 Authentication Stage 1 – Passkey Entry
-Wie anfällig OOB für Angriffe ist hängt von der verwendeten OOB-Technologie ab \cite{BtSpec4.2_2312-2313}.
+    \item Anfälligkeit auf Angriffe bei der OOB-Methode ist von der verwendeten OOB-Technologie abhängig \cite{BtSpec4.2_2312-2313}
 % QUELLE Spec. 4.2 S. 2312 f., 2.3.5.6.4 Authentication Stage 1 – Out of Band
+\end{itemize}
 
 Nach der Ausführung einer Pairing-Methode wird der LTK als Teilergebnis der Funktion f5 \cite{BtSpec4.2_2292-2293} 
 % QUELLE Spec. 4.2 S. 2292 f., 2.2.7 LE Secure Connections Key Generation Function f5
-mit den Eingabewerten Diffie-Hellman-Key, ein Nonce des Masters, ein Nonce des Slaves und der Adresse des Masters und Slaves ermittelt \cite{BtSpec4.2_2314}.
+mit den Eingabewerten Diffie-Hellman-Key, einer Nonce des Masters, einer Nonce des Slaves und der Adresse des Masters und Slaves ermittelt \cite{BtSpec4.2_2314}.
 % QUELLE Spec. 4.2 S. 2314, 2.3.5.6.5 Authentication Stage 2 and Long Term Key Calculation
 
 \paragraph{Pairing: Phase 3} \mbox{} \vspace{0.2cm} \\
-Wurde der STK bzw. LTK generiert, wird dieser genutzt, um die Verbindung zu verschlüsseln. Nun können in der dritten Phase transportspezifische Schlüssel ausgetauscht werden. Z.B. wird der Identity Resolving Key (IRK) zur Generierung und Auflösung von zufälligen Adressen verwendet und der Connection Signature Resolving Key (CSRK) zur Signatur von Daten und Überprüfung von Signaturen.
+Wurde der STK bzw. LTK generiert, wird er genutzt, um die Verbindung zu verschlüsseln. Nun können in der dritten Phase transportspezifische Schlüssel ausgetauscht werden. Z.B. wird der Identity Resolving Key (IRK) zur Generierung und Auflösung von zufälligen Adressen verwendet und der Connection Signature Resolving Key (CSRK) zur Signatur von Daten und Überprüfung von Signaturen.
 
 % Für Numeric Comparison und Just Works wird entsprechend Abb. X fortgefahren.
 % % TODO BILD VERWEIS
