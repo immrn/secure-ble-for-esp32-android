@@ -1,7 +1,7 @@
 Obwohl Bluetooth LE mit dem Privacy Feature und dem Security Manager (vor allem ab Bluetooth 4.2) einige Optionen für eine sichere Infrastruktur bietet, bleiben Probleme offen, die betrachtet werden müssen.
 \\\\
-Ein erfolgreicher Angriff auf zwei Geräte, die mittels BLE verschlüsselt kommunizieren, in Form von passivem Abhören oder eines MITM-Angriffs kann beim Aufbau einer Verbindung, also dem Pairing (siehe Sektion \ref{sec: le sm}) auftreten, da hier die Schlüssel ausgetauscht werden. In Tabelle \ref{tab: le sicherheit zusammenfassung}
-wird dargestellt, welchen Schutz die Pairing-Methoden des LE Legacy Pairing und des LE Secure Connections Pairing gegen passives Abhören und MITM-Angriffe bieten.
+Ein erfolgreicher Angriff auf zwei Geräte, die mittels BLE verschlüsselt kommunizieren, in Form von passivem Abhören oder eines MITM"=Angriffs kann beim Aufbau einer Verbindung, also dem Pairing (siehe Sektion \ref{sec: le sm}) auftreten, da hier die Schlüssel ausgetauscht werden. In Tabelle \ref{tab: le sicherheit zusammenfassung}
+wird dargestellt, welchen Schutz die Pairing"=Methoden des LE Legacy Pairing und des LE Secure Connections Pairing gegen passives Abhören und MITM"=Angriffe bieten.
 
 \begin{table}
     \begin{tabularx}{\textwidth}{|p{2.8cm}|p{2cm}|p{3cm}|p{2cm}|p{3cm}|}
@@ -18,7 +18,7 @@ wird dargestellt, welchen Schutz die Pairing-Methoden des LE Legacy Pairing und 
         \textbf{Passkey Entry} & Nein \cite{BtSpec4.2_2304} & Ja & Ja \cite{BtSpec4.2_2304} & Ja \cite{BtSpec4.2_2311}\\
         \hline
     \end{tabularx}
-    \caption[Schutz durch Pairing-Methoden vor passivem Abhören und MITM]{Schutz durch Pairing-Methoden vor passivem Abhören und MITM-Angriffen; Der Bindestrich symbolisiert, dass diese Methode nicht verfügbar ist. LE Secure Connections ist aufgrund des ECDH-Schlüsselaustausches \cite{BtSpec4.2_2307} generell vor passivem Abhören geschützt.}
+    \caption[Schutz durch Pairing-Methoden vor passivem Abhören und MITM]{Schutz durch Pairing-Methoden vor passivem Abhören und MITM-Angriffen; Der Bindestrich symbolisiert, dass diese Methode nicht verfügbar ist. LE Secure Connections ist aufgrund des ECDH"=Schlüsselaustausches \cite{BtSpec4.2_2307} generell vor passivem Abhören geschützt.}
     \label{tab: le sicherheit zusammenfassung}
 \end{table}
 % QUELLE Spec. 4.2 S. 2304, 2.3.5.2 LE Legacy Pairing - Just Works
@@ -27,16 +27,16 @@ wird dargestellt, welchen Schutz die Pairing-Methoden des LE Legacy Pairing und 
 % QUELLE Spec. 4.2 S. 2312, 2.3.5.6.4 Authentication Stage 1 – Out of Band
 % QUELLE Spec. 4.2 S. 2304, 2.3.5.3 LE Legacy Pairing - Passkey Entry
 % QUELLE Spec. 4.2 S. 2311, 2.3.5.6.3 Authentication Stage 1 – Passkey Entry
-Dabei ist zu beachten, dass die Methode Numeric Comparison dem Nutzer mit einer Wahrscheinlichkeit von 99,9999\% einen stattfindenden MITM-Angriff signalisiert \cite{BtSpec4.2_2309}, bevor er das Pairing fortsetzt, und dass die Methode Passkey Entry nur mit einer Wahrscheinlichkeit von 0,0001\% anfällig für einen MITM-Angriff ist \cite{BtSpec4.2_2304} \cite{BtSpec4.2_2311}. Die Methode OOB des LE Legacy Pairing ist bei einer sicheren OOB-Technologie ebenfalls mit einer Wahrscheinlichkeit von 0,0001\% oder kleiner (je nach Schlüsselgröße) anfällig gegen MITM-Angriffe \cite{BtSpec4.2_2305}.
+Dabei ist zu beachten, dass die Methode Numeric Comparison dem Nutzer mit einer Wahrscheinlichkeit von 99,9999\% einen stattfindenden MITM"=Angriff signalisiert \cite{BtSpec4.2_2309}, bevor er das Pairing fortsetzt, und dass die Methode Passkey Entry nur mit einer Wahrscheinlichkeit von 0,0001\% anfällig für einen MITM"=Angriff ist \cite{BtSpec4.2_2304} \cite{BtSpec4.2_2311}. Die Methode OOB des LE Legacy Pairing ist bei einer sicheren OOB"=Technologie ebenfalls mit einer Wahrscheinlichkeit von 0,0001\% oder kleiner (je nach Schlüsselgröße) anfällig gegen MITM"=Angriffe \cite{BtSpec4.2_2305}.
 % QUELLE Spec. 4.2 S. 2309, 2.3.5.6.2 Authentication Stage 1 – Just Works or Numeric Comparison
 % QUELLE Spec. 4.2 S. 2304, 2.3.5.3 LE Legacy Pairing - Passkey Entry
 % QUELLE Spec. 4.2 S. 2311, 2.3.5.6.3 Authentication Stage 1 – Passkey Entry
 % QUELLE Spec. 4.2 S. 2305, 2.3.5.4 Out of Band
 \\\\
-Obwohl die Methoden Numeric Comparison und Passkey Entry des LE Secure Connections Pairing eine beachtliche Sicherheit bieten, ist laut den Bluetooth-Spezifikationen 4.0 bis 5.2 jede dieser Bluetooth-Versionen in der Lage, das LE Legacy Pairing auszuführen \cite{BtSpec4.2_248_b} \cite{BtSpec5.2_277}, das wiederum anfälliger ist (OOB ausgenommen). 
+Obwohl die Methoden Numeric Comparison und Passkey Entry des LE Secure Connections Pairing eine beachtliche Sicherheit bieten, ist laut den Bluetooth"=Spezifikationen 4.0 bis 5.2 jede dieser Bluetooth"=Versionen in der Lage, das LE Legacy Pairing auszuführen \cite{BtSpec4.2_248_b} \cite{BtSpec5.2_277}, das wiederum anfälliger ist (OOB ausgenommen). 
 % QUELLE Spec. 4.2 S. 248, 5.4 LE SECURITY
 % QUELLE Spec. 5.2 S. 277, 5.4 LE SECURITY
-Vermutlich kann dies durch die letztendlichen Entwickler einer Bluetooth-Software bzw. -Hardware oder durch den Anwender selbst eingeschränkt werden. Falls dies nicht umgesetzt wird, stellt die Möglichkeit einer Rückstufung auf LE Legacy Pairing ein Sicherheitsrisiko dar.
+Vermutlich kann dies durch die letztendlichen Entwickler einer Bluetooth"=Software bzw. -Hardware oder durch den Anwender selbst eingeschränkt werden. Falls dies nicht umgesetzt wird, stellt die Möglichkeit einer Rückstufung auf LE Legacy Pairing ein Sicherheitsrisiko dar.
 \\\\
 Dabei sei zu erwähnen, dass jede Methode bestimmte Möglichkeiten zur Ein- und Ausgabe von den zu verwendenten Geräten voraussetzt. Ist es für den Anwender nicht möglich, diese Voraussetzungen in den Geräten zu implementieren, kann BLE selbst keine Schutz bieten.
 \\\\

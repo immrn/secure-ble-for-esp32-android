@@ -143,17 +143,6 @@
 		\input{sections/grundlagen_ble/sicherheit.tex}
 
 \newpage
-\section{Grundlagen zu Transport Layer Security}
-
-	\subsection{Zertifikate}
-
-	\subsection{Algorithmen}
-
-	\subsection{Protokoll}
-
-	\subsection{Sicherheit}
-
-\newpage
 \section{Infrastruktur}
 	\label{sec: infra allg}
 	\input{sections/infrastruktur/infrastruktur_allgemein.tex}
@@ -168,8 +157,11 @@
 
 	\subsection{Sicherheit}
 		\label{sec: infra sicherheit}
+		\input{sections/infrastruktur/sicherheit.tex}
 
 	\subsection{Verbindungsaufbau}
+		\label{sec: infra verbindungsaufbau}
+		\input{sections/infrastruktur/verbindungsaufbau.tex}
 
 \newpage
 \section{Implementierung}
@@ -190,9 +182,11 @@
 
 \newpage
 \section{Ausblick}
+	\input{sections/zusammenfassung_ausblick/ausblick.tex}
 
 \newpage
 \section{Zusammenfassung}
+	\input{sections/zusammenfassung_ausblick/zusammenfassung.tex}
 
 \newpage
 \printbibliography[heading=bibintoc]
@@ -204,5 +198,10 @@
 	\subsection{Sequence Number / Next Expected Sequence Number}
 		\label{sec: anhang nesn sn}
 		\input{sections/anhang/nesn_sn_beispiel.tex}
+
+\section{Sequenzdiagramme}
+	\subsection{Verbindungsaufbau der Infrastruktur}
+		\label{sec: anhang infra verb aufbau}
+		\input{sections/anhang/infra_verb_aufbau.tex}
 
 \end{document}

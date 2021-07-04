@@ -1,0 +1,35 @@
+participant "<size:14>Peripheral/Server" as Peripheral/Server
+participant "<size:14>Central/Client" as Central/Client
+
+parallel
+Peripheral/Server->Peripheral/Server:<size:14>begin advertising
+Central/Client->Central/Client:<size:14>begin scanning
+parallel off
+
+Peripheral/Server-#orange>Central/Client:<size:14>              connectable undirected advertising event              
+Peripheral/Server<#orange-Central/Client:<size:14>connection request
+
+parallel
+Peripheral/Server->Peripheral/Server:<size:14>stop advertising
+Central/Client->Central/Client:<size:14>stop scanning
+parallel off
+
+note over Peripheral/Server,Central/Client:<size:14>unencrypted unauthenticated connection established
+
+Peripheral/Server<-Central/Client:<size:14>client hello
+Peripheral/Server->Central/Client:<size:14>server hello
+
+Peripheral/Server->Central/Client:<size:14>certificate request
+Peripheral/Server->Central/Client:<size:14>server certificate
+Central/Client->Central/Client:<size:14>verify server certificate
+Peripheral/Server->Central/Client:<size:14>server certificate verify
+Central/Client->Central/Client:<size:14>verify that server\nowns the private key\nof its certificate
+
+Central/Client->Peripheral/Server:<size:14>client certificate
+Peripheral/Server->Peripheral/Server:<size:14>verify client certificate
+Central/Client->Peripheral/Server:<size:14>client certificate verify
+Peripheral/Server->Peripheral/Server:<size:14>verify that client owns the private key of its certificate
+
+Peripheral/Server<->Central/Client:<size:14>perform key exchange
+
+note over Peripheral/Server,Central/Client:<size:14>authenticated encrypted connection established

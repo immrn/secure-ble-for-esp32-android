@@ -8,6 +8,8 @@ Die Topologie der Infrastruktur beschränkt sich auf das Minimum an Kommunikatio
     \label{fig: infra topologie}
 \end{figure}
 
-Für einen öffentlich zugänglichen Anwendungsfall sollte die Zertifizierungsstelle dem Mikrocontroller und Smartphone in regelmäßigen Abständen (z.B. jährlich) jeweils ein Zertifikat ausstellen. Mit diesen Zertifikaten und der Kenntnis über das Root-Zertifikat (das Zertifikat der Zertifizierungsstelle) können Mikrocontroller und Smartphone sich gegenseitig authentifizieren und somit die Grundlage für eine sichere Kommunikation bilden.
+Für einen öffentlich zugänglichen Anwendungsfall sollte die Zertifizierungsstelle dem Mikrocontroller und Smartphone in regelmäßigen Abständen (z.B. jährlich) jeweils ein Zertifikat ausstellen. Mit diesen Zertifikaten und der Kenntnis über das Root"=Zertifikat (das Zertifikat der Zertifizierungsstelle) können Mikrocontroller und Smartphone sich gegenseitig authentifizieren und somit die Grundlage für eine sichere Kommunikation bilden.
 \\\\
 Für einen einfachen privaten Anwendungsfall, in dem z.B. nur ein einziger Mikrocontroller und ein einziges Smartphone diese Infrastruktur verwenden, würde es genügen, die Schlüsselpaare und Zertifikate auf einer dritten Instanz (z.B. einen Personal Computer) zu generieren und über eine sichere Verbindung (z.B. eine direkte Kabelverbindung) an den Mikrocontroller und das Smartphone zu übertragen.
+\\\\
+Die Zuweisung der Rollen ist nicht vorgeschrieben. Jedoch wäre es üblich, den Mikrocontroller in Bezug auf BLE als Slave bzw. Peripheral (siehe Sektion \ref{sec: le gap}) und in Bezug auf TLS als Server zu definieren. Folglich würde das Smartphone bzgl. BLE als Master bzw. Central und bzgl. TLS als Client festgelegt werden.
