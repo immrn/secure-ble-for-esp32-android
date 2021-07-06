@@ -14,7 +14,7 @@ Die Abb. \ref{fig: impl ablauf anwendung server teil 2} zeigt den weiteren Ablau
     \caption[Ablauf der Server-Anwendung (Teil 2)]{Ablauf der Server-Anwendung (Teil 2)}
     \label{fig: impl ablauf anwendung server teil 2}
 \end{figure}
-Zunächst wird der L2CAP-Server erstellt und somit das L2CAP Event Handling aktiv. Danach wird der TLS-Kontext erstellt. Er benötigt den privaten Schlüssel und das Zertifikat des Fahrzeugs sowie das Root-Zertifikat. Zudem verlangt er nach den Funktionen für das Senden bzw. Empfangen von Daten durch den Transport (L2CAP). Danach beginnt die Server-Anwendung mit dem Advertising mithilfe von GAP. Dabei werden Connectable Undirected Advertising Events als Broadcast gesendet, in denen die öffentliche Bluetooth-Adresse des Server-Mikrocontrollers angegeben wird. Nun ist auch das GAP Event Handling aktiv.
+Zunächst wird der L2CAP-Server erstellt und somit wird das L2CAP Event Handling aktiv. Danach wird der TLS-Kontext erstellt. Er benötigt den privaten Schlüssel und das Zertifikat des Fahrzeugs sowie das Root-Zertifikat. Zudem verlangt er nach den Funktionen für das Senden bzw. Empfangen von Daten durch den Transport (L2CAP). Danach beginnt die Server-Anwendung mit dem Advertising mithilfe von GAP. Dabei werden Connectable Undirected Advertising Events als Broadcast gesendet, in denen die öffentliche Bluetooth-Adresse des Server-Mikrocontrollers angegeben wird. Nun ist auch das GAP Event Handling aktiv.
 \\\\
 In Abb. \ref{fig: impl ablauf anwendung client teil 2} ist der weitere Ablauf der Client-Anwendung dargestellt.
 \begin{figure}[H]
@@ -23,8 +23,9 @@ In Abb. \ref{fig: impl ablauf anwendung client teil 2} ist der weitere Ablauf de
     \caption[Ablauf der Client-Anwendung (Teil 2)]{Ablauf der Client-Anwendung (Teil 2)}
     \label{fig: impl ablauf anwendung client teil 2}
 \end{figure}
-Die Client-Anwendung erstellt ebenfalls einen TLS-Kontext, nur dass hier der private Schlüssel und das Zertifikat für den Client und nicht für das Fahrzeug benötigt wird. Danach wird mittels GAP nach Advertising Events gescannt (General Discovery Mode) und somit das GAP Event Handling aktiv.
+Die Client-Anwendung erstellt ebenfalls einen TLS-Kontext, nur dass hier der private Schlüssel und das Zertifikat für den Client und nicht für das Fahrzeug benötigt wird. Danach wird mittels GAP nach Advertising Events gescannt (General Discovery Mode) und somit wird das GAP Event Handling aktiv.
 \\\\
+
 % BLE verbinung
 % TLS
 % verweis auf emulation des back ends für subscription austausch
