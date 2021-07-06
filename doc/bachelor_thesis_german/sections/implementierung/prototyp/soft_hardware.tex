@@ -1,4 +1,4 @@
-Zur Entwicklung des Prototyps bzw. Implementierung wurde neben einem Personal Computer (PC) folgende Hardware verwendet:
+Zur Entwicklung des Prototyps wurde neben einem Personal Computer (PC) folgende Hardware verwendet:
 
 \begin{itemize}
     \item Mikrocontroller \textit{ESP32-WROOM-32}
@@ -17,9 +17,9 @@ Der \textit{ESP32-WROOM-32} unterstützt Bluetooth 4.2 für BR/EDR und BLE \cite
     \item \textit{mbedTLS}
 \end{itemize}
 
-FreeRTOS dient als Betriebssystem für den \textit{ESP32-WROOM-32}. SPIFFS wird benötigt, um Dateien auf den \textit{ESP32-WROOM-32} zu "`flashen"' bzw. um auf diese während der Laufzeit zugreifen zu können. So können die Zertifikate und privaten Schlüssel vor der Laufzeit auf den \textit{ESP32-WROOM-32} übertragen werden.
+FreeRTOS dient als Betriebssystem für den \textit{ESP32-WROOM-32}. SPIFFS wird benötigt, um Dateien auf den \textit{ESP32-WROOM-32} zu "`flashen"' bzw. um auf diese während der Laufzeit zugreifen zu können.
 
-\textit{nimBLE} ist eine Software-Bibliothek für den BLE-Host von der \textit{Apache Software Foundation} und bietet Programmierschnittstellen für GAP und L2CAP \cite{nimBLE}. Für GAP und L2CAP wird jeweils ein Event Handling ausgeführt. So kann bspw. festgelegt werden welche Reaktion auf das Entdecken eines anderen Bluetooth-Geräts folgt oder wie mit über L2CAP empfangenen Anwendungsdaten verfahren wird.
+\textit{nimBLE} ist eine Software-Bibliothek für den BLE-Host von der \textit{Apache Software Foundation} und bietet Programmierschnittstellen für GAP und L2CAP \cite{nimBLE}. Für GAP und L2CAP wird jeweils ein Event Handling ausgeführt. So kann bspw. festgelegt werden, welche Reaktion auf das Entdecken eines anderen Bluetooth-Geräts folgt oder wie mit über L2CAP empfangenen Anwendungsdaten verfahren wird.
 
 \textit{mbedTLS} ist eine Software-Bibliothek für TLS und eignet sich aufgrund niedriger Anforderungen an den Speicher für eingebettete Systeme. Aktuell wird höchstens TLS 1.2 unterstützt \cite{ArmMbedCoreFeatures}.
 

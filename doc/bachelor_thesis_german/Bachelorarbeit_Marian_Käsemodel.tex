@@ -18,6 +18,13 @@
 
 \usepackage{amsmath}
 
+\usepackage{listings}
+\definecolor{gray}{rgb}{0.95,0.95,0.95}
+\definecolor{violet}{rgb}{0.5, 0.0, 0.6}
+\lstset{ basicstyle=\ttfamily\small, backgroundcolor=\color{gray} }
+\lstset{ numbers=left, numberstyle=\tiny, numbersep=2pt }
+\lstset{ breaklines=true, keywordstyle=\color{violet} }
+
 %\usepackage{setspace}% Einstellungen Zeilenabstand
 	%\onehalfspacing% Einstellungen Zeilenabstand
 
@@ -172,10 +179,6 @@
 		\label{sec: impl topologie}
 		\input{sections/implementierung/topologie.tex}
 
-	\subsection{Hardware und Software}
-		\label{sec: impl soft hard}
-		\input{sections/implementierung/soft_hardware.tex}
-
 	\subsection{Ausleihprozess}
 		\label{sec: impl ausleih allg}
 		\input{sections/implementierung/ausleihprozess/ausleihprozess_allg.tex}
@@ -197,13 +200,24 @@
 			\input{sections/implementierung/ausleihprozess/einfluss_der_infra.tex}
 
 	\subsection{Prototyp}
-		
-		\subsubsection{Generierung von Zertifiakten und Schlüsseln}
-			\input{sections/implementierung/prototyp/zertifikate_und_schluessel.tex}
+		\label{sec: impl prototyp allgemein}
+		\input{sections/implementierung/prototyp/prototyp_allg.tex}
 
-		\subsubsection{Ablauf der Mikrocontroller-Anwendung}
+		\subsubsection{Hardware und Software}
+			\label{sec: impl soft hard}
+			\input{sections/implementierung/prototyp/soft_hardware.tex}
 
-		\subsubsection{Konfiguration}
+		\subsubsection{Simulierung der Zertifizierungsstelle}
+			\label{sec: impl prototyp zertifizierungstelle}
+			\input{sections/implementierung/prototyp/simulierung_der_zertifizierungsstelle.tex}
+
+		\subsubsection{Ablauf der Anwendung für Client und Server}
+			\label{sec: impl prototyp anwendung}
+			\input{sections/implementierung/prototyp/ablauf_der_anwendung_fuer_client_und_server.tex}
+
+		\subsubsection{Simulierung des Back Ends}
+			\label{sec: impl prototyp back end}
+			\input{sections/implementierung/prototyp/simulierung_des_backends.tex}
 
 \newpage
 \section{Ausblick}

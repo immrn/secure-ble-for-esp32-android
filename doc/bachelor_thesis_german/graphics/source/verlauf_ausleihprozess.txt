@@ -1,0 +1,25 @@
+participant "<size:14>Back End" as back
+participant "<size:14>App" as app
+participant "<size:14>Microcontroller/Vehicle" as mcu
+
+parallel
+note over back:<size:14>- root certificate\n- back end certificate & private key\n- subscription certificate & private key
+
+note over app:<size:14>- root certificate\n- app certificate & private key
+
+note over mcu:<size:14>- root certificate\n- vehicle certificate & private key
+parallel off
+
+
+
+app->back:<size:14>subscription request\n(vehicle ID, timestamp)
+
+back<-back:<size:14>- create payload\n  (vehicle ID, timestamp, ...)\n- hash and sign payload with\n  private subscription key
+
+back->app:<size:14>subscription\n(paylaod, signature,subscription certificate)
+
+app<-#blue>mcu:<size:14>establish safe connection via BLE using TLS
+
+app-#blue>mcu:<size:14>subscription
+
+mcu->mcu:<size:14>- verify subscription\n  certificate\n- verify signature

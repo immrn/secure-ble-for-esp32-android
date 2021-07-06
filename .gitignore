@@ -21,6 +21,9 @@ doc/bachelor_thesis_german/**/*.log
 doc/bachelor_thesis_german/**/*.lot
 doc/bachelor_thesis_german/**/*.xml
 doc/bachelor_thesis_german/**/*.toc
+doc/bachelor_thesis_german/**/*.bbl
+doc/bachelor_thesis_german/**/*.blg
+doc/bachelor_thesis_german/**/*.out
 
 # PDF files
 doc/bachelor_thesis_german/Bachelorarbeit_Marian_Käsemodel.pdf
