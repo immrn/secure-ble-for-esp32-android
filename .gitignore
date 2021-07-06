@@ -26,7 +26,7 @@ doc/bachelor_thesis_german/**/*.blg
 doc/bachelor_thesis_german/**/*.out
 
 # PDF files
-doc/bachelor_thesis_german/Bachelorarbeit_Marian_Käsemodel.pdf
+# doc/bachelor_thesis_german/Bachelorarbeit_Marian_Käsemodel.pdf
 
 # Private files
 todo.md
