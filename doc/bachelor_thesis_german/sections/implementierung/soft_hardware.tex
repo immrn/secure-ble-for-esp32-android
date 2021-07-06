@@ -1,0 +1,27 @@
+Zur Entwicklung des Prototyps bzw. Implementierung wurde neben einem Personal Computer (PC) folgende Hardware verwendet:
+
+\begin{itemize}
+    \item Mikrocontroller \textit{ESP32-WROOM-32}
+    \item Smartphone mit Android 11.0
+\end{itemize}
+
+Obwohl das Smartphone vorerst nicht Teil des Prototyps ist, wird es bzw. das Betriebssystem \textit{Android} einbezogen.
+
+\subsubsection{ESP32-WROOM-32 (Mikrocontroller)}
+Der \textit{ESP32-WROOM-32} unterstützt Bluetooth 4.2 für BR/EDR und BLE \cite{ESP32_6}. Der Hersteller \textit{Espressif} stellt das \textit{Espressif Internet of Things Development Framework} (ESP-IDF) \cite{ESPIDF}, mit dem Anwendungen für den \textit{ESP32-WROOM-32} entwickelt werden können. Das ESP-IDF unterstützt unter anderem folgende Software-Komponenten:
+
+\begin{itemize}
+    \item \textit{Free Real Time Operating System} (FreeRTOS)
+    \item \textit{Serial Peripheral Interface Flash Files System} (SPIFFS)
+    \item \textit{nimBLE}
+    \item \textit{mbedTLS}
+\end{itemize}
+
+FreeRTOS dient als Betriebssystem für den \textit{ESP32-WROOM-32}. SPIFFS wird benötigt, um Dateien auf den \textit{ESP32-WROOM-32} zu "`flashen"' bzw. um auf diese während der Laufzeit zugreifen zu können. So können die Zertifikate und privaten Schlüssel vor der Laufzeit auf den \textit{ESP32-WROOM-32} übertragen werden.
+
+\textit{nimBLE} ist eine Software-Bibliothek für den BLE-Host von der \textit{Apache Software Foundation} und bietet Programmierschnittstellen für GAP und L2CAP \cite{nimBLE}. Für GAP und L2CAP wird jeweils ein Event Handling ausgeführt. So kann bspw. festgelegt werden welche Reaktion auf das Entdecken eines anderen Bluetooth-Geräts folgt oder wie mit über L2CAP empfangenen Anwendungsdaten verfahren wird.
+
+\textit{mbedTLS} ist eine Software-Bibliothek für TLS und eignet sich aufgrund niedriger Anforderungen an den Speicher für eingebettete Systeme. Aktuell wird höchstens TLS 1.2 unterstützt \cite{ArmMbedCoreFeatures}.
+
+\subsubsection{Smartphone/Android}
+Das Smartphone unterstützt Bluetooth 5.0 und wird mit Android 11.0 betrieben. Wenn es mit dem \textit{ESP32-WROOM-32} per Bluetooth kommuniziert, wird also die Bluetooth-Version 4.2 verwendet. Android unterstützt mit den Programmpaketen "`android.bluetooth.le"' \cite{android_le} BLE und mit "`javax.net.ssl"' \cite{android_ssl} SSL/TLS. Wie in Sektion \ref{sec: infra sicherheit} erläutert, sollten nur TLS 1.2 oder TLS 1.3 genutzt werden. TLS 1.2 wird ab Android 4.1 und TLS 1.3 ab Android 10.0 unterstützt \cite{android_ssl_context}.

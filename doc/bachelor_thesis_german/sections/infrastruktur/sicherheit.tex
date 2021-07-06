@@ -7,7 +7,7 @@ TLS lässt sich im Wesentlichen in zwei Teilprotokolle unterteilen: das Handshak
 \\\\
 Weitere Argumente für die Verwendung von TLS sind folgende. TLS ist unabhängig vom Transport Layer, wodurch nicht zwingend Sockets verwendet werden müssen. Zudem existieren viele Software"=Bibliotheken zu TLS, wodurch mehrere Platformen unterstützt werden. Die Ciphersuites können je nach verwendeter Programmierschnittstelle vor der Laufzeit für das Zielsystem beschränkt werden. Außerdem wird für diese Infrastruktur mit TLS der Mangel an Sicherheit auf Anwendungsebene beseitigt, da eine Ende"=zu"=Ende"=Verschlüsselung vorliegt. % TODO wie sicher ist TLS? MITM, abhören; -> kommt auf TLS Version und Cipher Suites an
 \\\\
-Folglich wird TLS für diese Infrastruktur angewandt.
+Folglich wird TLS für diese Infrastruktur angewandt. Die Versionen TLS 1.0 und TLS 1.1 sind veraltet und sollten nicht mehr genutzt werden \cite{RFC8996}. Demnach sind die Versionen TLS 1.2 oder bevorzugt TLS 1.3 zu nutzen.
 
 \subsubsection{BLE-Sicherheitsfunktionen}
 \label{sec: infra sicherheit ble funktionen}

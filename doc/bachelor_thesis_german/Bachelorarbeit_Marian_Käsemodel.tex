@@ -165,20 +165,45 @@
 
 \newpage
 \section{Implementierung}
-
-	\subsection{Ziel der Implementierung}
+	\label{sec: impl allg}
+	\input{sections/implementierung/implementierung_allg.tex}
 
 	\subsection{Topologie}
+		\label{sec: impl topologie}
+		\input{sections/implementierung/topologie.tex}
 
 	\subsection{Hardware und Software}
-
-	\subsection{Transport und Sicherheit}
+		\label{sec: impl soft hard}
+		\input{sections/implementierung/soft_hardware.tex}
 
 	\subsection{Ausleihprozess}
+		\label{sec: impl ausleih allg}
+		\input{sections/implementierung/ausleihprozess/ausleihprozess_allg.tex}
 
-		\subsubsection{Verbindungsaufbau}
+		\subsubsection{Verbindungsaufbau und Autorisierung}
+			\label{sec: impl verbindungsaufbau und autorisierung}
+			\input{sections/implementierung/ausleihprozess/verbindungsaufbau_und_autorisierung.tex}
+
+		\subsubsection{Erneuter Verbindungsaufbau}
+			\label{sec: impl erneuter verbindungsaufbau}
+			\input{sections/implementierung/ausleihprozess/erneuter_verbindungsaufbau.tex}
 
 		\subsubsection{Beenden des Ausleihprozesses}
+			\label{sec: impl beenden des ausleihprozesses}
+			\input{sections/implementierung/ausleihprozess/beenden_des_ausleihprozesses.tex}
+
+		\subsubsection{Einfluss der Infrastruktur}
+			\label{sec: impl einfluss der infrastruktur}
+			\input{sections/implementierung/ausleihprozess/einfluss_der_infra.tex}
+
+	\subsection{Prototyp}
+		
+		\subsubsection{Generierung von Zertifiakten und Schlüsseln}
+			\input{sections/implementierung/prototyp/zertifikate_und_schluessel.tex}
+
+		\subsubsection{Ablauf der Mikrocontroller-Anwendung}
+
+		\subsubsection{Konfiguration}
 
 \newpage
 \section{Ausblick}
