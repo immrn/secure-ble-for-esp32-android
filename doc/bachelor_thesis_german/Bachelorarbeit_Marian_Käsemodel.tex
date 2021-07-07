@@ -10,7 +10,7 @@
 \usepackage[backend=biber,style=numeric,sorting=none,sortlocale=de_DE_phonebook]{biblatex}% bessere Literaturverarbeitung
 \addbibresource{literaturquellen.bib}
 
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage[table,figure]{hypcap}
 
 \usepackage{tabularx,diagbox}
@@ -42,7 +42,7 @@
 
 %\TUBAFZweitlogo{\includegraphics{thekla_logo.jpg}}
 
-\TUBAFTitel[Entwicklung einer Sicherheitsinfrastruktur zur Bluetooth-Kommunikation zwischen Smartphone und Mikrocontroller]{Entwicklung einer Sicherheitsinfrastruktur zur Bluetooth-Kommunikation zwischen Smartphone und Mikrocontroller}
+\TUBAFTitel[Entwicklung einer Sicherheitsinfrastruktur zur Bluetooth-Kommunikation]{Entwicklung einer Sicherheitsinfrastruktur zur Bluetooth-Kommunikation zwischen Smartphone und Mikrocontroller}
 \TUBAFBetreuer{\,Prof.\,Dr. Konrad Froitzheim}
 \TUBAFKorrektor{M.Sc. Jonas Treumer}%TODO Betreuer Lorenzo Neumann
 \TUBAFAutor[M. Käsemodel]{Marian Käsemodel}
@@ -65,6 +65,7 @@
 \tableofcontents
 \newpage
 \listoffigures
+\newpage
 \listoftables
 
 \newpage
@@ -96,6 +97,7 @@
 		\label{sec: le controller}
 		\input{sections/grundlagen_ble/controller/controller_allgemein.tex}
 
+		\newpage
 		\subsubsection{Physical Layer}
 			\label{sec: le phy}
 
@@ -110,7 +112,7 @@
 		\subsubsection{Link Layer}
 			\label{sec: le ll}
 
-			\paragraph{Paketstruktur}
+			\paragraph{Paketstruktur} \mbox{} \vspace{0.2cm} \\
 				\label{sec: le ll paketstruktur}
 				\input{sections/grundlagen_ble/controller/link_layer/paketstruktur.tex}
 
@@ -212,32 +214,27 @@
 			\label{sec: impl prototyp anwendung}
 			\input{sections/implementierung/prototyp/ablauf_der_anwendung_fuer_client_und_server.tex}
 
-		\subsubsection{Simulierung des Back Ends}
-			\label{sec: impl prototyp back end}
-			\input{sections/implementierung/prototyp/simulierung_des_backends.tex}
-
 \newpage
-\section{Ausblick}
-	\input{sections/zusammenfassung_ausblick/ausblick.tex}
-
-\newpage
-\section{Zusammenfassung}
+\section{Zusammenfassung und Ausblick}
 	\input{sections/zusammenfassung_ausblick/zusammenfassung.tex}
 
 \newpage
-\printbibliography[heading=bibintoc]
-
-\newpage
-\appendix
-
-\section{Beispiele}
-	\subsection{Sequence Number / Next Expected Sequence Number}
+\section{Anhang}
+	\subsection{Beispiel: Sequence Number / Next Expected Sequence Number}
 		\label{sec: anhang nesn sn}
 		\input{sections/anhang/nesn_sn_beispiel.tex}
 
-\section{Sequenzdiagramme}
-	\subsection{Verbindungsaufbau der Infrastruktur}
+	\newpage
+	\subsection{Sequenzdiagramm: Verbindungsaufbau der Infrastruktur}
 		\label{sec: anhang infra verb aufbau}
 		\input{sections/anhang/infra_verb_aufbau.tex}
+
+	\newpage
+	\subsection{Referenz zum Repository}
+		\label{sec: anhang repo}
+		\input{sections/anhang/repo.tex}
+
+\newpage
+\printbibliography[heading=bibintoc]
 
 \end{document}

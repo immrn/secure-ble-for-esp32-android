@@ -1,10 +1,10 @@
 Ein Logical Link unterscheidet sich abhängig davon, ob er auf einem LE ACL Logical Transport oder einem ADVB Logical Transport aufbaut und ob er zur Übertragung von Kontrollsignalen oder Anwendungsdaten genutzt wird. Anhand des Logical Link Identifier (LLID) im Header des Basisbandpakets (siehe S. \pageref{fig: ll data channel pdu} Abb. \ref{fig: ll data channel pdu}) wird unterschieden, ob es sich bei der zu übertragenden PDU um Anwendungsdaten oder Kontrollsignale handelt.
 \\\\
 Der Control Logical Link (LE-C) nutzt den darunter liegenden LE ACL Logical Transport, um Kontrollsignale zwischen Geräten im Piconet zu übertragen.
-
+\\\\
 Der User Asynchronous Logical Link (LE-U) nutzt den darunter liegenden LE ACL Logical Transport, um alle asynchronen Anwendungsdaten zu übertragen. Über dem Link Layer agiert das Protokoll L2CAP, dessen Frames für den Link Layer fragmentiert werden müssen. Mithilfe des LLID"=Wertes 0b10 wird der Beginn eines L2CAP"=Frames (das erste Fragment eines L2CAP"=Frame) und der Wert 0b01 die Fortsetzung eines L2CAP"=Frames (die folgenden Fragmente des L2CAP"=Frame) gekennzeichnet. Somit wird der Header des Protokolls L2CAP einfach gehalten und eine korrekte Synchronisation bei der Zusammensetzung der Fragmente zu einem L2CAP"=Frame garantiert. Folglich muss ein L2CAP"=Frame zunächst vollständig übertragen werden, bevor ein neuer Frame begonnen werden kann. \cite{BtSpec4.0_176-177}
 \\\\
 Der Advertising Broadcast Control Logical Link (ADVB-C) nutzt den darunter liegenden Default ADVB, um Kontrollsignale für Verbindungsanfragen oder Anfragen für weitere Broadcast"=Anwendungsdaten zu übertragen.
-
+\\\\
 Der Advertising Broadcast User Data Logical Link (ADVB-U) nutzt den darunter liegenden Default ADVB, um verbindungslos und ohne den Gebrauch von LE-U Anwendungsdaten als Broadcast zu senden. \cite{BtSpec4.0_176-177}
 % QUELLE paragraph: Specification 4.0, S.176 f.

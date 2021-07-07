@@ -14,7 +14,7 @@ Die Abb. \ref{fig: impl ablauf anwendung server teil 2} zeigt den weiteren Ablau
     \caption[Ablauf der Server-Anwendung (Teil 2)]{Ablauf der Server-Anwendung (Teil 2)}
     \label{fig: impl ablauf anwendung server teil 2}
 \end{figure}
-Zunächst wird der L2CAP-Server erstellt und somit wird das L2CAP Event Handling aktiv. Danach wird der TLS-Kontext erstellt. Er benötigt den privaten Schlüssel und das Zertifikat des Fahrzeugs sowie das Root-Zertifikat. Zudem verlangt er nach den Funktionen für das Senden bzw. Empfangen von Daten durch den Transport (L2CAP). Danach beginnt die Server-Anwendung mit dem Advertising mithilfe von GAP. Dabei werden Connectable Undirected Advertising Events als Broadcast gesendet, in denen die öffentliche Bluetooth-Adresse des Server-Mikrocontrollers angegeben wird. Nun ist auch das GAP Event Handling aktiv.
+Zunächst wird der L2CAP-Server erstellt. Somit wird das L2CAP Event Handling aktiv. Anschließend wird der TLS-Kontext erstellt. Er benötigt den privaten Schlüssel und das Zertifikat des Fahrzeugs sowie das Root-Zertifikat. Zudem verlangt er nach den Funktionen für das Senden bzw. Empfangen von Daten durch den Transport (L2CAP). Danach beginnt die Server-Anwendung mit dem Advertising mithilfe von GAP. Dabei werden Connectable Undirected Advertising Events als Broadcast gesendet, in denen die öffentliche Bluetooth-Adresse des Server-Mikrocontrollers angegeben wird. Nun ist auch das GAP Event Handling aktiv.
 \\\\
 In Abb. \ref{fig: impl ablauf anwendung client teil 2} ist der weitere Ablauf der Client-Anwendung dargestellt.
 \begin{figure}[H]
@@ -23,10 +23,8 @@ In Abb. \ref{fig: impl ablauf anwendung client teil 2} ist der weitere Ablauf de
     \caption[Ablauf der Client-Anwendung (Teil 2)]{Ablauf der Client-Anwendung (Teil 2)}
     \label{fig: impl ablauf anwendung client teil 2}
 \end{figure}
-Die Client-Anwendung erstellt ebenfalls einen TLS-Kontext, nur dass hier der private Schlüssel und das Zertifikat für den Client und nicht für das Fahrzeug benötigt wird. Danach wird mittels GAP nach Advertising Events gescannt (General Discovery Mode) und somit wird das GAP Event Handling aktiv.
+Die Client-Anwendung erstellt ebenfalls einen TLS-Kontext, nur dass hier der private Schlüssel und das Zertifikat für den Client und nicht für das Fahrzeug benötigt wird. Danach wird mittels GAP nach Advertising Events gescannt (General Discovery Mode). Somit wird das GAP Event Handling aktiv.
 \\\\
-
-% BLE verbinung
-% TLS
-% verweis auf emulation des back ends für subscription austausch
-% RX buffer management
+Mittels der beiden Event Handlings bauen Server und Client erst eine Verbindung über GAP auf und anschließend eine Verbindung über einen neuen L2CAP-Channel. Daraufhin wird der TLS-Handshake ausgeführt. Dabei senden die Anwendungen über L2CAP Service Data Units, deren maximale Länge der Maximum Transmission Unit (MTU) entspricht. Empfängt eine Anwendung eine SDU, speichert sie die SDU im Memory Pool für empfangene Anwendungsdaten (RX-Buffer). Der RX-Buffer ist in Blöcke gleicher Länge aufgeteilt, die jeweils eine MTU speichern können. Jede im RX-Buffer gespeicherte SDU nimmt einen dieser Blöcke ein. Möchte nun die Anwendung eine bestimmte Anzahl an Bytes empfangen, prüft sie zunächst, ob sich eine oder mehrere SDUs im RX-Buffer befinden. Sie liest ggf. die geforderte Byteanzahl aus der SDU und lässt einen Pointer auf das nächst zu lesende Byte zeigen. Für den Fall eines leeren RX-Buffers, wartet die Anwendung (mittels Semaphores) bis eine SDU empfangen und in den RX-Buffer geschrieben wurde.
+\\\\
+Schlägt der TLS-Handshake fehl, stoppen beide Anwendungen. Anderenfalls erstellt der Client die Subscription mit einem vorgefertigtem Payload. Hat er den Hashwert des Payloads gebildet und signiert, sendet er die Subscription mithilfe des TLS-Kontextes an den Server. Dieser verifiziert die Subscription (siehe Sektion \ref{sec: impl verbindungsaufbau und autorisierung}). Wurde die Subscription erfolgreich verifiziert, erfolgt die Bestätigung auf der Konsole. Anderenfalls stoppt die jeweilige Anwendung.

@@ -43,10 +43,8 @@ Dabei sei zu erwähnen, dass jede Methode bestimmte Möglichkeiten zur Ein- und 
 Ein weiteres Problem ist die Sicherheit auf der Anwendungsebene. Unterstützt ein System weitere Anwendungen, könnte es möglich sein, dass eine solche fremde Anwendung auf Daten zugreifen kann, die nicht für sie bestimmt sind. Die Möglichkeit dazu besteht, da BLE zu übertragende Daten innerhalb des Controllers auf der Ebene des Link Layer verschlüsselt \cite{BtSpec4.0_196} \cite{BtSpec4.0_2285}. 
 % QUELLE Spec. 4.0 S. 196, 5.2.3 Encryption
 % QUELLE Spec. 4.0 S. 2285, 1 ENCRYPTION AND AUTHENTICATION OVERVIEW
-
-Ein Beispiel für ein solches System ist das Betriebssystem \textit{Android} von der \textit{Open Handset Alliance}. Auf Androids Webpräsenz für BLE wird darauf hingewiesen, dass BLE keine Sicherheit auf Anwendungsebene liefert: "`When a user pairs their device with another device using BLE, the data that's communicated between the two devices is accessible to all apps on the user's device"' \cite{AndroidAppLayerSec}.
+Ein Beispiel für ein solches System ist das Betriebssystem \textit{Android} von der \textit{Open Handset Alliance}. Auf Androids Webpräsenz für BLE wird darauf hingewiesen, dass BLE keine Sicherheit auf Anwendungsebene liefert: "`When a user pairs their device with another device using BLE, the data that's communicated between the two devices is accessible to all apps on the user's device"' \cite{AndroidAppLayerSec}. 
 % QUELLE ZITAT https://developer.android.com/guide/topics/connectivity/bluetooth-le Bluetooth low energy -> Caution
-
 Den Beweis dafür, dass Daten, die durch BLE über den Link Layer verschlüsselt oder unverschlüsselt übertragen werden, von anderen Apps ausgelesen werden können, liefert eine Studie der \textit{Royal Holloway University of London} \cite{RoyalHollowayUniversity}. Sie zeigt, wie innerhalb des Betriebssystems \textit{Android} eine Anwendung Daten über das Protokoll ATT bzw. GATT empfangen kann, die theoretisch für eine andere Anwendung bestimmt sind.
 % QUELLE
 % A Study of the Feasibility of Co-located App Attacks against BLE and a Large-Scale Analysis of the Current Application-Layer Security LandscapePallavi Sivakumaran and Jorge Blasco, Royal Holloway University of London

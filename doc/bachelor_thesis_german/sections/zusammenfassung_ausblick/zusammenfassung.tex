@@ -1,1 +1,9 @@
-% TODO
+Zu Beginn der Arbeit wurde die Funktionsweise von \textit{Bluetooth Low Energy} (BLE) vorgestellt. Die Recherche beschränkte sich auf die Spezifikationen und Webauftritte der Bluetooth SIG, um aus erster Hand ein Verständnis für die BLE-Architektur zu gewinnen. Durch die Untersuchung der Sicherheitsfunktionen und weitere Recherche, konnten die Schwachstellen von BLE aufgedeckt werden.
+\\\\
+Zum Entwurf der Infrastruktur musste zunächst ein geeigneter Transport innerhalb der BLE-Architektur bestimmt werden. Die Tatsache, dass sich viele Quellen zu dieser Frage auf das Protokoll GATT beziehen, war irreführend. GATT ist aufgrund seiner Attributsemantik und dem einhergehenden Overhead in der Übertragung ungeeignet für den effizienten Transport von Daten. Stattdessen stellt sich L2CAP als geeignetes Transportprotokoll heraus. Desweiteren war eine Recherche bzgl. der Sicherheitprobleme der Kommunikation und deren Lösungen notwendig. Das TLS-Protokoll stellte sich dabei als hervorragende Lösung heraus, um über einen beliebigen Transport sicher Daten zu übertragen.
+\\\\
+Die Implementierung der Infrastruktur für den Verleihdienst wies das Problem der Autorisierung auf. Als Lösung wurde die "`Subscription"' entworfen, die sicherstellt, dass ein Nutzer berechtigt ist, ein Fahrzeug auszuleihen, und es nach kurzer Abwesenheit wieder zu nutzen. Der entwickelte Prototyp für die Implementierung zeigt, wie für zwei Mikrocontroller die Infrastruktur angewandt wird und eine Subscription sicher übertragen und verifiziert wird.
+\\\\
+Eine Weiterführung der Arbeit wäre in der Implementierung denkbar. Dabei könnte der Prototyp zunächst unter Einbezug eines Smartphones weiterentwickelt werden. Desweiteren könnten die Zertifizierungsstelle und der Back End Server physisch eingebunden werden, um einen realistischen Prototypen zu testen.
+
+Außerdem kann die Arbeit mit einer genauen Kryptoanalyse des vorgestellten Konzepts der "`Subscription"' weitergeführt werden, um eventuelle Schwachstellen aufzudecken und auszuschließen.
